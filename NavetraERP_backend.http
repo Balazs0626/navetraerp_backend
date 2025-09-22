@@ -1,0 +1,6 @@
+@NavetraERP_backend_HostAddress = http://localhost:5022
+
+GET {{NavetraERP_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
