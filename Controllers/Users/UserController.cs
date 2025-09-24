@@ -26,6 +26,16 @@ public class UserController : ControllerBase
         return Ok(results);
     }
 
+    [HttpPost]
+    public async Task<IActionResult> Create(RegisterRequest req)
+    {
+        var results = await _service.CreateAsync(req.Username, req.Password, req.RoleId, req.Email);
+
+        if (results == null) NotFound();
+
+        return Ok(results);
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
