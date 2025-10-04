@@ -36,6 +36,24 @@ public class UserService
         return result;
     }
 
+    public async Task<bool> SetUserActiveAsync(int id, bool active)
+    {
+        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
+
+        var update = @"
+            UPDATE Users
+            SET active = @active
+            WHERE id = @id";
+
+        var rowsAffected = await connection.ExecuteAsync(update, new
+        {
+            id,
+            active
+        });
+
+        return rowsAffected > 0;
+    }
+
     public async Task<User> CreateAsync(string username, string passwordHash, int roleId, string email)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
@@ -95,6 +113,59 @@ public class UserService
         return results;
     }
 
+    public async Task<UserUpdateDto> GetByIdAsync(int id)
+    {
+        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
+
+        const string query = @"
+            SELECT
+                username AS Username,
+                '' AS PasswordHash,
+                email AS Email,
+                role_id AS RoleId
+            FROM Users
+            WHERE id = @id";
+
+        var result = await connection.QuerySingleOrDefaultAsync<UserUpdateDto>(query, new
+        {
+            id
+        });
+
+        return result;
+    }
+
+    public async Task<bool> UpdateAsync(int id, UserUpdateDto dto)
+    {
+        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
+
+        string update = @"
+            UPDATE Users
+            SET
+                username = @Username,
+                email = @Email,
+                role_id = @RoleId";
+
+        if (!String.IsNullOrWhiteSpace(dto.PasswordHash))
+        {
+            update += ", password_hash = @PasswordHash";
+        }
+
+        update += " WHERE id = @id";
+
+        var rowsAffected = await connection.ExecuteAsync(update, new
+        {
+            dto.Username,
+            dto.Email,
+            dto.RoleId,
+            dto.PasswordHash,
+            id
+        });
+
+        Console.WriteLine(dto.PasswordHash);
+
+        return rowsAffected > 0;
+    }
+
     public async Task<bool> DeleteAsync(int id)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
@@ -110,5 +181,20 @@ public class UserService
 
         return rowsAffected > 0;
     }
+
+    public async Task<int> GetActiveUserCountAsync()
+    {
+        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
+
+        const string query = @"
+            SELECT COUNT(*) 
+            FROM Users
+            WHERE active = 1";
+
+        var count = await connection.ExecuteScalarAsync<int>(query);
+
+        return count;
+    }
+
     #endregion
 }

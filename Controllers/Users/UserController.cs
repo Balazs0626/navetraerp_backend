@@ -6,7 +6,7 @@ using NavetraERP.Services;
 namespace NavetraERP.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/users")]
 public class UserController : ControllerBase
 {
     UserService _service;
@@ -14,16 +14,6 @@ public class UserController : ControllerBase
     public UserController(UserService service)
     {
         _service = service;
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        var results = await _service.GetAllAsync();
-
-        if (results == null) NotFound();
-
-        return Ok(results);
     }
 
     [HttpPost]
@@ -36,6 +26,26 @@ public class UserController : ControllerBase
         return Ok(results);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var results = await _service.GetAllAsync();
+
+        if (results == null) NotFound();
+
+        return Ok(results);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var result = await _service.GetByIdAsync(id);
+
+        if (result == null) NotFound();
+
+        return Ok(result);
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -44,5 +54,32 @@ public class UserController : ControllerBase
         if (!result) NotFound();
 
         return Ok(result);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, UserUpdateDto dto)
+    {
+
+        var hash = BCrypt.Net.BCrypt.HashPassword(dto.PasswordHash);
+
+        if (!String.IsNullOrWhiteSpace(dto.PasswordHash))
+            dto.PasswordHash = hash;
+
+        var result = await _service.UpdateAsync(id, dto);
+
+
+        if (!result) NotFound();
+
+        return Ok(result);
+    }
+
+    [HttpGet("active_users")]
+    public async Task<IActionResult> GetActiveUserCount()
+    {
+        var results = await _service.GetActiveUserCountAsync();
+
+        if (results == null) NotFound();
+
+        return Ok(results);
     }
 }

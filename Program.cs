@@ -21,6 +21,7 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<PermissionService>();
 
 // JWT
 var jwtCfg = builder.Configuration.GetSection("Jwt");

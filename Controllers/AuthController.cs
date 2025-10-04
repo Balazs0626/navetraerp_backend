@@ -47,6 +47,8 @@ public class AuthController : ControllerBase
         var role = await _roles.GetRoleByIdAsync(user.RoleId) ?? new Role { Id = 0, RoleName = "Unknown" };
         var perms = await _roles.GetPermissionsForRoleAsync(user.RoleId);
 
+        var active = await _users.SetUserActiveAsync(user.Id, true);
+
         return Ok(_jwt.CreateToken(user, role, perms));
     }
 
@@ -61,6 +63,18 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPut("active")]
+    [Authorize]
+    public async Task<IActionResult> SetUserActive(int id, bool active)
+    {
+        var result = await _users.SetUserActiveAsync(id, active);
+
+        if (!result)
+            NotFound("Hiba");
+
+        return Ok(result);
+    }
+
     [HttpGet("me")]
     [Authorize]
     public ActionResult<object> Me()
@@ -68,6 +82,7 @@ public class AuthController : ControllerBase
         var username = User.Identity?.Name ?? "";
         var role = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? "";
         var perms = User.Claims.Where(c => c.Type == "permission").Select(c => c.Value).ToList();
-        return Ok(new { username, role, permissions = perms });
+        var id = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "";
+        return Ok(new { id, username, role, permissions = perms });
     } 
 }
