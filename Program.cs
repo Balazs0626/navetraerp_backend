@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using NavetraERP.Services;
+using NavetraERP.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,8 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<PermissionService>();
+builder.Services.AddScoped<DepartmentService>();
+builder.Services.AddScoped<PositionService>();
 
 // JWT
 var jwtCfg = builder.Configuration.GetSection("Jwt");
