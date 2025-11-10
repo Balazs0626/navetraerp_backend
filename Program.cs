@@ -29,6 +29,10 @@ builder.Services.AddScoped<ShiftService>();
 builder.Services.AddScoped<EmployeeService>();
 builder.Services.AddScoped<WorkScheduleService>();
 builder.Services.AddScoped<LeaveRequestService>();
+builder.Services.AddScoped<PerformanceReviewService>();
+builder.Services.AddScoped<WarehouseService>();
+builder.Services.AddScoped<ProductService>();
+
 
 // JWT
 var jwtCfg = builder.Configuration.GetSection("Jwt");

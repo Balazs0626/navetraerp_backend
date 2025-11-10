@@ -103,15 +103,17 @@ public class EmployeeService
 
     }
 
-    public async Task<IEnumerable<EmployeeListDto>> GetAllAsync()
+    public async Task<IEnumerable<EmployeeListDto>> GetAllAsync(string? fullName = null, int? departmentId = null, int? positionId = null)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
-        const string query = @"
+        string query = @"
             SELECT
                 e.id AS Id,
                 e.first_name + ' ' + e.last_name AS FullName,
+                d.id AS DepartmentId,
                 d.department_name AS DepartmentName,
+                p.id AS PositionId,
                 p.position_name AS PositionName,
                 e.user_id,
                 CASE
@@ -120,9 +122,30 @@ public class EmployeeService
                 END AS HasUser
             FROM HR_Employee e
             JOIN HR_Departments d ON e.department_id = d.id
-            JOIN HR_Positions p ON e.position_id = p.id";
+            JOIN HR_Positions p ON e.position_id = p.id
+            WHERE 1 = 1";
 
-        var result = await connection.QueryAsync<EmployeeListDto>(query);
+        var parameters = new DynamicParameters();
+
+        if (!string.IsNullOrWhiteSpace(fullName))
+        {
+            query += " AND (e.first_name + ' ' + e.last_name) LIKE @FullName";
+            parameters.Add("@FullName", $"%{fullName}%");
+        }
+
+        if (departmentId != null)
+        {
+            query += " AND e.department_id = @DepartmentId";
+            parameters.Add("@DepartmentId", departmentId);
+        }
+
+        if (positionId != null)
+        {
+            query += " AND e.position_id = @PositionId";
+            parameters.Add("@PositionId", positionId);
+        }
+
+        var result = await connection.QueryAsync<EmployeeListDto>(query, parameters);
 
         return result;
     }

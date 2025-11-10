@@ -1,26 +1,24 @@
-using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NavetraERP.DTOs;
-using NavetraERP.Models;
 using NavetraERP.Services;
 
 namespace NavetraERP.Controllers;
 
 [ApiController]
-[Route("api/employee")]
-public class EmployeeController : ControllerBase
+[Route("api/warehouses")]
+public class WarehouseController : ControllerBase
 {
 
-    private readonly EmployeeService _service;
+    private readonly WarehouseService _service;
 
-    public EmployeeController(EmployeeService service)
+    public WarehouseController(WarehouseService service)
     {
         _service = service;
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateEmployeeDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateWarehouseDto dto)
     {
         var result = await _service.CreateAsync(dto);
 
@@ -32,7 +30,8 @@ public class EmployeeController : ControllerBase
     {
         var result = await _service.GetAllAsync();
 
-        if (result == null) NotFound();
+        if (result == null)
+            return NotFound();
 
         return Ok(result);
     }
@@ -42,17 +41,19 @@ public class EmployeeController : ControllerBase
     {
         var result = await _service.GetByIdAsync(id);
 
-        if (result == null) NotFound();
+        if (result == null)
+            return NotFound();
 
         return Ok(result);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] EmployeeDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateWarehouseDto dto)
     {
         var result = await _service.UpdateAsync(id, dto);
 
-        if (!result) NotFound();
+        if (!result)
+            NotFound();
 
         return Ok(result);
     }
@@ -62,9 +63,9 @@ public class EmployeeController : ControllerBase
     {
         var result = await _service.DeleteAsync(id);
 
-        if (!result) NotFound();
+        if (!result)
+            NotFound();
 
         return Ok(result);
     }
-
 }
