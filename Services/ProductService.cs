@@ -29,19 +29,40 @@ public class ProductService
         return result;
     }
 
-    public async Task<IEnumerable<ProductListDto>> GetAllAsync()
+    public async Task<IEnumerable<ProductListDto>> GetAllAsync(string? sku = null, string? name = null, bool? active = null)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
-        const string query = @"
+        string query = @"
             SELECT
                 id AS Id,
                 sku AS Sku,
                 name AS Name,
                 active AS Active
-            FROM Products";
+            FROM Products
+            WHERE 1 = 1";
 
-        var result = await connection.QueryAsync<ProductListDto>(query);
+        var parameters = new DynamicParameters();
+
+        if (!string.IsNullOrWhiteSpace(sku))
+        {
+            query += " AND sku LIKE @Sku";
+            parameters.Add("@Sku", $"%{sku}%");
+        }
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            query += " AND name LIKE @name";
+            parameters.Add("@Name", $"%{name}%");
+        }
+
+        if (active != null)
+        {
+            query += " AND active = @Active";
+            parameters.Add("@Active", active);
+        }
+
+        var result = await connection.QueryAsync<ProductListDto>(query, parameters);
 
         return result;
     }

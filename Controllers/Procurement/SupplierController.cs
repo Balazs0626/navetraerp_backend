@@ -1,25 +1,24 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NavetraERP.DTOs;
-using NavetraERP.Models;
 using NavetraERP.Services;
 
 namespace NavetraERP.Controllers;
 
 [ApiController]
-[Route("api/products")]
-public class ProductController : ControllerBase
+[Route("api/suppliers")]
+public class SupplierController : ControllerBase
 {
 
-    private readonly ProductService _service;
+    private readonly SupplierService _service;
 
-    public ProductController(ProductService service)
+    public SupplierController(SupplierService service)
     {
         _service = service;
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateProductDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateSupplierDto dto)
     {
         var result = await _service.CreateAsync(dto);
 
@@ -27,12 +26,12 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? sku, [FromQuery] string? name, [FromQuery] bool? active)
+    public async Task<IActionResult> GetAll()
     {
-        var result = await _service.GetAllAsync(sku, name, active);
+        var result = await _service.GetAllAsync();
 
         if (result == null)
-            NotFound();
+            return NotFound();
 
         return Ok(result);
     }
@@ -43,15 +42,15 @@ public class ProductController : ControllerBase
         var result = await _service.GetByIdAsync(id);
 
         if (result == null)
-            NotFound();
+            return NotFound();
 
         return Ok(result);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] Product model)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateSupplierDto dto)
     {
-        var result = await _service.UpdateAsync(id, model);
+        var result = await _service.UpdateAsync(id, dto);
 
         if (!result)
             NotFound();
@@ -69,5 +68,4 @@ public class ProductController : ControllerBase
 
         return Ok(result);
     }
-
 }

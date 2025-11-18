@@ -32,6 +32,8 @@ builder.Services.AddScoped<LeaveRequestService>();
 builder.Services.AddScoped<PerformanceReviewService>();
 builder.Services.AddScoped<WarehouseService>();
 builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<SupplierService>();
+builder.Services.AddScoped<PurchaseOrderService>();
 
 
 // JWT

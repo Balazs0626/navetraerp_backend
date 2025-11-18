@@ -1,60 +1,49 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NavetraERP.DTOs;
-using NavetraERP.Models;
 using NavetraERP.Services;
 
 namespace NavetraERP.Controllers;
 
 [ApiController]
-[Route("api/products")]
-public class ProductController : ControllerBase
+[Route("api/purchase_orders")]
+public class PurchaseOrderController : ControllerBase
 {
 
-    private readonly ProductService _service;
+    private readonly PurchaseOrderService _service;
 
-    public ProductController(ProductService service)
+    public PurchaseOrderController(PurchaseOrderService service)
     {
         _service = service;
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateProductDto dto)
+    public async Task<IActionResult> Create([FromBody] CreatePurchaseOrderDto dto)
     {
         var result = await _service.CreateAsync(dto);
 
         return Ok(result);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? sku, [FromQuery] string? name, [FromQuery] bool? active)
+     [HttpGet]
+    public async Task<IActionResult> GetAll()
     {
-        var result = await _service.GetAllAsync(sku, name, active);
+        var result = await _service.GetAllAsync();
 
         if (result == null)
-            NotFound();
+            return NotFound();
 
         return Ok(result);
     }
 
+    
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _service.GetByIdAsync(id);
 
         if (result == null)
-            NotFound();
-
-        return Ok(result);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] Product model)
-    {
-        var result = await _service.UpdateAsync(id, model);
-
-        if (!result)
-            NotFound();
+            return NotFound();
 
         return Ok(result);
     }
@@ -69,5 +58,4 @@ public class ProductController : ControllerBase
 
         return Ok(result);
     }
-
 }
