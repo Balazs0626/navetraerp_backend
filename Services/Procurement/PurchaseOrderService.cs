@@ -145,13 +145,18 @@ public class PurchaseOrderService
 
             const string purchaseOrderItemsQuery = @"
                 SELECT
-                    purchase_order_id AS PurchaseOrderId,
-                    product_id AS ProductId,
-                    quantity_ordered AS QuantityOrdered,
-                    price_per_unit AS PricePerUnit,
-                    discount AS Discount,
-                    tax_rate AS TaxRate
-                FROM PurchaseOrderItems
+                    poi.purchase_order_id AS PurchaseOrderId,
+                    poi.product_id AS ProductId,
+                    poi.quantity_ordered AS QuantityOrdered,
+                    poi.price_per_unit AS PricePerUnit,
+                    poi.discount AS Discount,
+                    poi.tax_rate AS TaxRate,
+                    ((poi.price_per_unit * (1 - (poi.discount / 100))) * poi.quantity_ordered) * (1 - (poi.tax_rate / 100)) AS NettoPrice,
+                    ((poi.price_per_unit * (1 - (poi.discount / 100))) * poi.quantity_ordered) AS BruttoPrice,
+                    p.sku AS ProductSku,
+                    p.name AS ProductName
+                FROM PurchaseOrderItems poi
+                JOIN Products p ON p.id = poi.product_id
                 WHERE purchase_order_id = @id";
 
             var items = (await connection.QueryAsync<PurchaseOrderItemDto>(purchaseOrderItemsQuery, new
