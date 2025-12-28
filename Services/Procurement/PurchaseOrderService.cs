@@ -1,6 +1,7 @@
 using Dapper;
 using System.Data.SqlClient;
 using NavetraERP.DTOs;
+using System.Security.AccessControl;
 
 namespace NavetraERP.Services;
 
@@ -89,19 +90,40 @@ public class PurchaseOrderService
 
     }
 
-    public async Task<IEnumerable<PurchaseOrderListDto>> GetAllAsync()
+    public async Task<IEnumerable<PurchaseOrderListDto>> GetAllAsync(int? id = null, DateTime? orderDate = null, string? status = null)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
-        const string query = @"
+        string query = @"
             SELECT
                 id AS Id,
                 order_date AS OrderDate,
                 expected_delivery_date AS ExpectedDeliveryDate,
                 status AS Status
-            FROM PurchaseOrders";
+            FROM PurchaseOrders
+            WHERE 1 = 1";
 
-        var result = await connection.QueryAsync<PurchaseOrderListDto>(query);
+        var parameters = new DynamicParameters();
+
+        if (id != null)
+        {
+            query += " AND id = @Id";
+            parameters.Add("@Id", id);
+        }
+
+        if (orderDate.HasValue)
+        {
+            query += " AND order_date = @OrderDate";
+            parameters.Add("@OrderDate", orderDate.Value.Date);
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query += " AND status = @Status";
+            parameters.Add("@Status", status);
+        }
+
+        var result = await connection.QueryAsync<PurchaseOrderListDto>(query, parameters);
 
         return result;
     }

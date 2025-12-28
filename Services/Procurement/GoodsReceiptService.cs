@@ -79,20 +79,41 @@ public class GoodsReceiptService
 
     }
 
-    public async Task<IEnumerable<GoodsReceiptListDto>> GetAllAsync()
+    public async Task<IEnumerable<GoodsReceiptListDto>> GetAllAsync(int? purchaseOrderId = null, int? warehouseId = null, DateTime? date = null)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
-        const string query = @"
+        string query = @"
             SELECT
                 gr.id AS Id,
                 gr.purchase_order_id AS PurchaseOrderId,
                 w.name AS WarehouseName,
                 gr.receipt_date AS ReceiptDate
             FROM GoodsReceipts gr
-            JOIN Warehouses w ON w.id = gr.warehouse_id";
+            JOIN Warehouses w ON w.id = gr.warehouse_id
+            WHERE 1 = 1";
 
-        var result = await connection.QueryAsync<GoodsReceiptListDto>(query);
+        var parameters = new DynamicParameters();
+
+        if (purchaseOrderId != null)
+        {
+            query += " AND gr.purchase_order_id = @PurchaseOrderId";
+            parameters.Add("@PurchaseOrderId", purchaseOrderId);
+        }
+
+        if (warehouseId != null)
+        {
+            query += " AND gr.warehouse_id = @WarehouseId";
+            parameters.Add("@WarehouseId", warehouseId);
+        }
+
+        if (date.HasValue)
+        {
+            query += " AND gr.receipt_date = @Date";
+            parameters.Add("@Date", date.Value.Date);
+        }
+
+        var result = await connection.QueryAsync<GoodsReceiptListDto>(query, parameters);
 
         return result;
     }

@@ -65,7 +65,6 @@ public class WorkScheduleService
         {
             query += " AND (e.first_name + ' ' + e.last_name) LIKE @Name";
             parameters.Add("@Name", $"%{name}%");
-            System.Console.WriteLine("asdsadas");
         }
 
         if (date.HasValue)

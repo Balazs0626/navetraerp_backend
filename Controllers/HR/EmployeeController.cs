@@ -19,17 +19,27 @@ public class EmployeeController : ControllerBase
         _service = service;
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateEmployeeDto dto)
     {
+
+        if (!User.HasClaim("permission", "CREATE:EMPLOYEES"))
+            return Forbid();
+
         var result = await _service.CreateAsync(dto);
 
         return Ok(result);
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? fullName, [FromQuery] int? departmentId, [FromQuery] int? positionId)
     {
+
+        if (!User.HasClaim("permission", "VIEW:EMPLOYEES"))
+            return Forbid();
+
         var result = await _service.GetAllAsync(fullName, departmentId, positionId);
 
         if (result == null) 
@@ -38,9 +48,14 @@ public class EmployeeController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
+
+        if (!User.HasClaim("permission", "VIEW:EMPLOYEES"))
+            return Forbid();
+
         var result = await _service.GetByIdAsync(id);
 
         if (result == null) 
@@ -49,9 +64,14 @@ public class EmployeeController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] EmployeeDto dto)
     {
+
+        if (!User.HasClaim("permission", "EDIT:EMPLOYEES"))
+            return Forbid();
+
         var result = await _service.UpdateAsync(id, dto);
 
         if (!result) 
@@ -60,9 +80,14 @@ public class EmployeeController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
+
+        if (!User.HasClaim("permission", "DELETE:EMPLOYEES"))
+            return Forbid();
+
         var result = await _service.DeleteAsync(id);
 
         if (!result) 

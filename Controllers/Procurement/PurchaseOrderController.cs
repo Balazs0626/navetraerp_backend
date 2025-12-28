@@ -17,18 +17,28 @@ public class PurchaseOrderController : ControllerBase
         _service = service;
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreatePurchaseOrderDto dto)
     {
+
+        if (!User.HasClaim("permission", "CREATE:PURCHASE_ORDERS"))
+            return Forbid();
+
         var result = await _service.CreateAsync(dto);
 
         return Ok(result);
     }
 
-     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] int? id, [FromQuery] DateTime? orderDate, [FromQuery] string? status)
     {
-        var result = await _service.GetAllAsync();
+
+        if (!User.HasClaim("permission", "VIEW:PURCHASE_ORDERS"))
+            return Forbid();
+
+        var result = await _service.GetAllAsync(id, orderDate, status);
 
         if (result == null)
             return NotFound();
@@ -36,10 +46,14 @@ public class PurchaseOrderController : ControllerBase
         return Ok(result);
     }
 
-    
+    [Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
+
+        if (!User.HasClaim("permission", "VIEW:PURCHASE_ORDERS"))
+            return Forbid();
+
         var result = await _service.GetByIdAsync(id);
 
         if (result == null)
@@ -48,9 +62,14 @@ public class PurchaseOrderController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
+
+        if (!User.HasClaim("permission", "DELETE:PURCHASE_ORDERS"))
+            return Forbid();
+
         var result = await _service.DeleteAsync(id);
 
         if (!result)
