@@ -23,6 +23,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<PermissionService>();
+
 builder.Services.AddScoped<DepartmentService>();
 builder.Services.AddScoped<PositionService>();
 builder.Services.AddScoped<ShiftService>();
@@ -30,12 +31,17 @@ builder.Services.AddScoped<EmployeeService>();
 builder.Services.AddScoped<WorkScheduleService>();
 builder.Services.AddScoped<LeaveRequestService>();
 builder.Services.AddScoped<PerformanceReviewService>();
+
 builder.Services.AddScoped<WarehouseService>();
 builder.Services.AddScoped<ProductService>();
+
 builder.Services.AddScoped<SupplierService>();
 builder.Services.AddScoped<PurchaseOrderService>();
 builder.Services.AddScoped<GoodsReceiptService>();
 
+builder.Services.AddScoped<CustomerService>();
+builder.Services.AddScoped<SalesOrderService>();
+builder.Services.AddScoped<InvoiceService>();
 
 // JWT
 var jwtCfg = builder.Configuration.GetSection("Jwt");

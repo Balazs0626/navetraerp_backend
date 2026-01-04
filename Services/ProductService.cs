@@ -38,6 +38,7 @@ public class ProductService
                 id AS Id,
                 sku AS Sku,
                 name AS Name,
+                unit AS Unit,
                 active AS Active
             FROM Products
             WHERE 1 = 1";
