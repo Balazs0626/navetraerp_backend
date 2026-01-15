@@ -174,6 +174,9 @@ public class InvoiceService
                     p.unit AS ProductUnit,
                     ii.quantity AS Quantity,
                     ii.unit_price AS PricePerUnit,
+                    (ii.unit_price * ii.quantity) AS NetPrice,
+                    ROUND((ii.unit_price * ii.quantity) + ((ii.unit_price * ii.quantity)) * 0.27, 0) AS GrossPrice,
+                    ROUND((ii.unit_price * ii.quantity) * 0.27, 0) AS Tax,
                     ii.tax_rate AS TaxRate
                 FROM InvoiceItems ii
                 JOIN Products p ON p.id = ii.product_id

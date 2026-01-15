@@ -62,6 +62,22 @@ public class PurchaseOrderController : ControllerBase
         return Ok(result);
     }
 
+    //[Authorize]
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] PurchaseOrderDto dto)
+    {
+
+        if (!User.HasClaim("permission", "UPDATE:PURCHASE_ORDERS"))
+            return Forbid();
+
+        var result = await _service.UpdateAsync(id, dto);
+
+        if (!result)
+            NotFound();
+
+        return Ok(result);
+    }
+
     [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)

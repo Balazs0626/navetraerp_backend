@@ -161,8 +161,13 @@ public class SalesOrderService
 
             var result = await connection.QueryFirstOrDefaultAsync<SalesOrderDto>(salesOrderQuery, new
             {
-                id
+                id,
             }, transaction);
+
+            if (result != null)
+            {
+                result.SalesOrderNumber = $"SO-{id.ToString().PadLeft(4, '0')}/{result.OrderDate.ToString("yyyy")}";
+            }
 
             const string salesOrderItemsQuery = @"
                 SELECT
@@ -199,7 +204,7 @@ public class SalesOrderService
         }
     }
 
-        public async Task<bool> UpdateAsync(int id, SalesOrderDto dto)
+    public async Task<bool> UpdateAsync(int id, SalesOrderDto dto)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 

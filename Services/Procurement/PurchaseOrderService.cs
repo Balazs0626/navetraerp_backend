@@ -199,6 +199,86 @@ public class PurchaseOrderService
         }
     }
 
+    public async Task<bool> UpdateAsync(int id, PurchaseOrderDto dto)
+    {
+        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
+
+        await connection.OpenAsync();
+
+        using var transaction = connection.BeginTransaction();
+
+        var rowsAffected = 0;
+
+        try
+        {
+            const string updatePurchaseOrder = @"
+                UPDATE PurchaseOrders
+                SET
+                    supplier_id = @SupplierId,
+                    order_date = @OrderDate,
+                    expected_delivery_date = @ExpectedDeliveryDate,
+                    status = @Status,
+                    total_amount = @TotalAmount,
+                    currency = @Currency
+                WHERE id = @id";
+
+            var parameters = new DynamicParameters(dto);
+            parameters.Add("@id", id);
+
+            rowsAffected = await connection.ExecuteAsync(updatePurchaseOrder, parameters, transaction);
+
+            if (dto.Items != null)
+            {
+                var deleteQuery = "DELETE FROM PurchaseOrderItems WHERE purchase_order_id = @id";
+
+                await connection.ExecuteAsync(deleteQuery, new
+                {
+                    id
+                }, transaction);
+
+                foreach (var item in dto.Items)
+                {
+                    const string insertPurchaseOrderItem = @"
+                        INSERT INTO PurchaseOrderItems (
+                            purchase_order_id,
+                            product_id,
+                            quantity_ordered,
+                            price_per_unit,
+                            discount,
+                            tax_rate
+                        )
+                        VALUES (
+                            @PurchaseOrderId,
+                            @ProductId,
+                            @QuantityOrdered,
+                            @PricePerUnit,
+                            @Discount,
+                            @TaxRate
+                        )";
+
+                    var itemResult = await connection.ExecuteScalarAsync<int>(insertPurchaseOrderItem, new
+                    {
+                        PurchaseOrderId = id,
+                        ProductId = item.ProductId,
+                        QuantityOrdered = item.QuantityOrdered,
+                        PricePerUnit = item.PricePerUnit,
+                        Discount = item.Discount,
+                        TaxRate = item.TaxRate
+                    }, transaction);
+                }
+            }
+
+            transaction.Commit();
+
+            return rowsAffected > 0;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
     public async Task<bool> DeleteAsync(int id)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));

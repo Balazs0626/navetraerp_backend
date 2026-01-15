@@ -9,5 +9,8 @@ public class InvoiceItemDto
     public string ProductUnit { get; set; } = String.Empty;
     public decimal Quantity { get; set; }
     public decimal PricePerUnit { get; set; }
+    public decimal NetPrice { get; set; }
+    public decimal GrossPrice { get; set; }
+    public decimal Tax { get; set; }
     public decimal TaxRate { get; set; }
 }
