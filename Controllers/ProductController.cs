@@ -65,13 +65,13 @@ public class ProductController : ControllerBase
 
     [Authorize]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] Product model)
+    public async Task<IActionResult> Update(int id, [FromBody] ProductDto dto)
     {
 
         if (!User.HasClaim("permission", "EDIT:PRODUCTS"))
             return Forbid();
 
-        var result = await _service.UpdateAsync(id, model);
+        var result = await _service.UpdateAsync(id, dto);
 
         if (!result)
             NotFound();

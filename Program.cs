@@ -43,6 +43,9 @@ builder.Services.AddScoped<CustomerService>();
 builder.Services.AddScoped<SalesOrderService>();
 builder.Services.AddScoped<InvoiceService>();
 
+builder.Services.AddScoped<ProductionOrderService>();
+builder.Services.AddScoped<ProductionOutputService>();
+
 // JWT
 var jwtCfg = builder.Configuration.GetSection("Jwt");
 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtCfg["Key"]!));

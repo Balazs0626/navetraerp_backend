@@ -3,7 +3,7 @@ namespace NavetraERP.DTOs;
 public class SalesOrderDto
 {
     public int Id { get; set; }
-    public string SalesOrderNumber { get; set;} = String.Empty;
+    public string ReceiptNumber { get; set;} = String.Empty;
     public int CustomerId { get; set; }
     public string CustomerName { get; set;} = String.Empty;
     public string CustomerTaxNumber { get; set; } = String.Empty;

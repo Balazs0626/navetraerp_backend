@@ -7,4 +7,5 @@ public class ProductListDto
     public string Name { get; set; } = String.Empty;
     public string Unit { get; set; } = String.Empty;
     public bool Active { get; set; }
+    public int ComponentCount { get; set; }
 }

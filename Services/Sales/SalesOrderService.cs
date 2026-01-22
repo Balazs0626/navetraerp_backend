@@ -91,7 +91,7 @@ public class SalesOrderService
 
     }
 
-    public async Task<IEnumerable<SalesOrderListDto>> GetAllAsync(int? id = null, DateTime? orderDate = null, string? status = null)
+    public async Task<IEnumerable<SalesOrderListDto>> GetAllAsync(string? receiptNumber = null, DateTime? orderDate = null, string? status = null)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
@@ -106,10 +106,27 @@ public class SalesOrderService
 
         var parameters = new DynamicParameters();
 
-        if (id != null)
+        if (!string.IsNullOrWhiteSpace(receiptNumber))
         {
-            query += " AND id = @Id";
-            parameters.Add("@Id", id);
+            var parts = receiptNumber.Split('-');
+            
+            int? searchedId = null;
+
+            if (parts.Length > 1)
+            {
+                if (int.TryParse(parts[1], out int id)) 
+                    searchedId = id;
+            }
+            else if (int.TryParse(receiptNumber, out int id))
+            {
+                searchedId = id;
+            }
+
+            if (searchedId.HasValue)
+            {
+                query += " AND id = @Id";
+                parameters.Add("@Id", searchedId.Value);
+            }
         }
 
         if (orderDate.HasValue)
@@ -125,6 +142,12 @@ public class SalesOrderService
         }
 
         var result = await connection.QueryAsync<SalesOrderListDto>(query, parameters);
+
+        foreach (var item in result)
+        {
+            item.ReceiptNumber = $"SO-{item.Id.ToString().PadLeft(5, '0')}";
+        }
+            
 
         return result;
     }
@@ -166,7 +189,7 @@ public class SalesOrderService
 
             if (result != null)
             {
-                result.SalesOrderNumber = $"SO-{id.ToString().PadLeft(4, '0')}/{result.OrderDate.ToString("yyyy")}";
+                result.ReceiptNumber = $"SO-{id.ToString().PadLeft(5, '0')}";
             }
 
             const string salesOrderItemsQuery = @"
