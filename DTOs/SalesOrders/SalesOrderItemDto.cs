@@ -7,6 +7,7 @@ public class SalesOrderItemDto
     public decimal QuantityOrdered { get; set; }
     public decimal QuantityShipped { get; set; }
     public decimal PricePerUnit { get; set; }
+    public decimal PricePerUnitWithDiscount { get; set; }
     public decimal TotalPrice { get; set; }
     public decimal Discount { get; set; }
     public decimal TaxRate { get; set; }

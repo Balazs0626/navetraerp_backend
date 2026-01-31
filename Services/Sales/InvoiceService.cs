@@ -1,6 +1,7 @@
 using Dapper;
 using System.Data.SqlClient;
 using NavetraERP.DTOs;
+using NavetraERP.Utils;
 using System.Security.AccessControl;
 
 namespace NavetraERP.Services;
@@ -164,6 +165,8 @@ public class InvoiceService
             {
                 id
             }, transaction);
+
+            result.PaidAmountText = Utils.NumberToHungarianText.ToText((int)result.PaidAmount);
 
             const string invoiceItemsQuery = @"
                 SELECT

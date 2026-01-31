@@ -16,4 +16,5 @@ public class SalesOrderDto
     public string Status { get; set; } = String.Empty;
     public decimal TotalAmount { get; set; }
     public List<SalesOrderItemDto> Items { get; set; } = new List<SalesOrderItemDto>();
+    public int WarehouseId { get; set; }
 }

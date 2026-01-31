@@ -6,23 +6,23 @@ using NavetraERP.Services;
 namespace NavetraERP.Controllers;
 
 [ApiController]
-[Route("api/production_outputs")]
-public class ProductionOutputController : ControllerBase
+[Route("api/inventory_counts")]
+public class InventoryCountController : ControllerBase
 {
 
-    private readonly ProductionOutputService _service;
+    private readonly InventoryCountService _service;
 
-    public ProductionOutputController(ProductionOutputService service)
+    public InventoryCountController(InventoryCountService service)
     {
         _service = service;
     }
 
     //[Authorize]
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateProductionOutputDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateInventoryCountDto dto)
     {
 
-/*         if (!User.HasClaim("permission", "CREATE:PRODUCTION_OUTPUT"))
+/*         if (!User.HasClaim("permission", "CREATE:INVENTORY_COUNTS"))
             return Forbid(); */
 
         var result = await _service.CreateAsync(dto);
@@ -35,7 +35,7 @@ public class ProductionOutputController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
 
-/*         if (!User.HasClaim("permission", "VIEW:PRODUCTION_OUTPUT"))
+/*         if (!User.HasClaim("permission", "VIEW:INVENTORY_COUNTS"))
             return Forbid(); */
 
         var result = await _service.GetAllAsync();
@@ -51,7 +51,7 @@ public class ProductionOutputController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
 
-/*         if (!User.HasClaim("permission", "VIEW:PRODUCTION_OUTPUT"))
+/*         if (!User.HasClaim("permission", "VIEW:GOODS_RECEIPTS"))
             return Forbid(); */
 
         var result = await _service.GetByIdAsync(id);
@@ -63,33 +63,17 @@ public class ProductionOutputController : ControllerBase
     }
 
     //[Authorize]
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] ProductionOutputDto dto)
-    {
-
-/*         if (!User.HasClaim("permission", "UPDATE:PRODUCTION_OUTPUT"))
-            return Forbid(); */
-
-        var result = await _service.UpdateAsync(id, dto);
-
-        if (!result)
-            return NotFound();
-
-        return Ok(result);
-    }
-
-    //[Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
 
-/*         if (!User.HasClaim("permission", "DELETE:PRODUCTION_OUTPUT"))
+/*         if (!User.HasClaim("permission", "DELETE:INVENTORY_COUNTS"))
             return Forbid(); */
 
         var result = await _service.DeleteAsync(id);
 
         if (!result)
-            return NotFound();
+            NotFound();
 
         return Ok(result);
     }

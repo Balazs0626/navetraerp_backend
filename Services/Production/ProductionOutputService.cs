@@ -44,6 +44,47 @@ public class ProductionOutputService
 
             var result = await connection.ExecuteScalarAsync<int>(insertProductionOutput, dto, transaction);
 
+            const string insertStockMovement = @"
+                INSERT INTO StockMovements (
+                    product_id,
+                    to_warehouse_id,
+                    movement_type,
+                    quantity,
+                    reference_document,
+                    movement_date
+                )
+                VALUES (
+                    @ProductId,
+                    @ToWarehouseId,
+                    'in',
+                    @Quantity,
+                    @ReferenceDocument,
+                    @MovementDate
+                )";
+
+            var stockMovementResult = await connection.ExecuteScalarAsync<int>(insertStockMovement, new
+            {
+                ProductId = dto.ProductId,
+                ToWarehouseId = dto.WarehouseId,
+                Quantity = dto.QuantityProduced,
+                ReferenceDocument = $"GO-{result.ToString().PadLeft(5, '0')}",
+                MovementDate = dto.DateProduced
+            }, transaction);
+
+            const string updateInventoryItem = @"
+                UPDATE InventoryItems 
+                SET 
+                    quantity_on_hand = quantity_on_hand + @QuantityOnHand,
+                    last_updated = GETDATE()
+                WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+
+            await connection.ExecuteAsync(updateInventoryItem, new
+            {
+                ProductId = dto.ProductId,
+                WarehouseId = dto.WarehouseId,
+                QuantityOnHand = dto.QuantityProduced
+            }, transaction);
+
             transaction.Commit();
 
             return result;
@@ -139,6 +180,40 @@ public class ProductionOutputService
 
         try
         {
+
+            var referenceDocument = $"GO-{id.ToString().PadLeft(5, '0')}";
+
+            const string getOldQuery = @"
+                SELECT
+                    quantity_produced
+                FROM ProductionOutputs
+                WHERE id = @id";
+
+            var oldQuantity = await connection.QueryFirstOrDefaultAsync<int?>(getOldQuery, new
+            {
+                id
+            }, transaction);
+
+            if (oldQuantity != null)
+            {
+                const string restoreInventoryItem = @"
+                    UPDATE InventoryItems 
+                    SET 
+                        quantity_on_hand = quantity_on_hand - @QuantityToRestore,
+                        last_updated = GETDATE()
+                    WHERE product_id = @ProductId AND warehouse_id = @OriginalWarehouseId";
+
+                await connection.ExecuteAsync(restoreInventoryItem, new
+                {
+                    ProductId = dto.ProductId,
+                    OriginalWarehouseId = dto.WarehouseId, 
+                    QuantityToRestore = oldQuantity
+                }, transaction);
+            }
+
+            var deleteStockMovementQuery = "DELETE FROM StockMovements WHERE reference_document = @ReferenceDocument";
+            await connection.ExecuteAsync(deleteStockMovementQuery, new { ReferenceDocument = referenceDocument }, transaction);
+
             const string update = @"
                 UPDATE ProductionOutputs
                 SET
@@ -154,6 +229,48 @@ public class ProductionOutputService
 
             rowsAffected = await connection.ExecuteAsync(update, parameters, transaction);
 
+            const string insertStockMovement = @"
+                INSERT INTO StockMovements (
+                    product_id, 
+                    to_warehouse_id, 
+                    movement_type, 
+                    quantity, 
+                    reference_document, 
+                    movement_date
+                )
+                VALUES (
+                    @ProductId, 
+                    @ToWarehouseId, 
+                    'in', 
+                    @Quantity, 
+                    @ReferenceDocument, 
+                    @MovementDate
+                )";
+
+            await connection.ExecuteAsync(insertStockMovement, new
+            {
+                ProductId = dto.ProductId,
+                ToWarehouseId = dto.WarehouseId,
+                Quantity = dto.QuantityProduced,
+                ReferenceDocument = referenceDocument,
+                MovementDate = dto.DateProduced
+            }, transaction);
+
+
+            const string updateInventoryItem = @"
+                UPDATE InventoryItems 
+                SET 
+                    quantity_on_hand = quantity_on_hand + @QuantityOnHand,
+                    last_updated = GETDATE()
+                WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+
+            await connection.ExecuteAsync(updateInventoryItem, new
+            {
+                ProductId = dto.ProductId,
+                WarehouseId = dto.WarehouseId,
+                QuantityOnHand = dto.QuantityProduced
+            }, transaction);
+
             transaction.Commit();
 
             return rowsAffected > 0;
@@ -165,7 +282,7 @@ public class ProductionOutputService
         }
     }
 
-    public async Task<bool> DeleteAsync(int id)
+/*     public async Task<bool> DeleteAsync(int id)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
@@ -180,6 +297,72 @@ public class ProductionOutputService
                 WHERE id = @id";
 
             var rowsAffected = await connection.ExecuteAsync(delete, new
+            {
+                id
+            }, transaction);
+
+            transaction.Commit();
+
+            return rowsAffected > 0;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
+    } */
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
+        await connection.OpenAsync();
+        using var transaction = connection.BeginTransaction();
+
+        try
+        {
+            const string getDataQuery = @"
+                SELECT 
+                    product_id AS ProductId, 
+                    warehouse_id AS WarehouseId, 
+                    quantity_produced AS Quantity 
+                FROM ProductionOutputs 
+                WHERE id = @id";
+
+            var outputData = await connection.QueryFirstOrDefaultAsync<dynamic>(getDataQuery, new { id }, transaction);
+
+            if (outputData != null)
+            {
+                const string reduceInventory = @"
+                    UPDATE InventoryItems 
+                    SET 
+                        quantity_on_hand = quantity_on_hand - @Quantity,
+                        last_updated = GETDATE()
+                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+
+                await connection.ExecuteAsync(reduceInventory, new
+                {
+                    ProductId = outputData.ProductId,
+                    WarehouseId = outputData.WarehouseId,
+                    Quantity = outputData.Quantity
+                }, transaction);
+
+                var referenceDocument = $"GO-{id.ToString().PadLeft(5, '0')}"; 
+
+                const string deleteStockMovement = @"
+                    DELETE FROM StockMovements 
+                    WHERE reference_document = @ReferenceDocument";
+
+                await connection.ExecuteAsync(deleteStockMovement, new 
+                { 
+                    ReferenceDocument = referenceDocument 
+                }, transaction);
+            }
+
+            const string deleteProductionOutput = @"
+                DELETE FROM ProductionOutputs 
+                WHERE id = @id";
+
+            var rowsAffected = await connection.ExecuteAsync(deleteProductionOutput, new
             {
                 id
             }, transaction);

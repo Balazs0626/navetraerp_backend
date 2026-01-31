@@ -23,7 +23,7 @@ public class PermissionService
             SELECT
                 p.id AS PermissionId,
                 p.module_id AS ModuleId,
-                p.permission_name + ':' + m.module_name AS PermissionName
+                p.permission_name + '_' + m.module_name AS PermissionName
             FROM Permissions p
             LEFT JOIN Modules m ON p.module_id = m.id";
 

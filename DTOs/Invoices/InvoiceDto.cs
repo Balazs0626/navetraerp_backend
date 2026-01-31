@@ -8,6 +8,7 @@ public class InvoiceDto
     public DateTime DueDate { get; set; } 
     public decimal TotalAmount { get; set; }
     public decimal PaidAmount { get; set; }
+    public string PaidAmountText { get; set; } = String.Empty;
     public decimal TotalTaxRate { get; set; }
     public decimal TotalTax { get; set; }
     public string Status { get; set; } = String.Empty;

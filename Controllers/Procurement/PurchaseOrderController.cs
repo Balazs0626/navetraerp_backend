@@ -67,7 +67,7 @@ public class PurchaseOrderController : ControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] PurchaseOrderDto dto)
     {
 
-        if (!User.HasClaim("permission", "UPDATE:PURCHASE_ORDERS"))
+        if (!User.HasClaim("permission", "EDIT:PURCHASE_ORDERS"))
             return Forbid();
 
         var result = await _service.UpdateAsync(id, dto);

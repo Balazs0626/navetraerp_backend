@@ -8,5 +8,6 @@ public class CreateProductionOrderDto
     public DateTime EndDate { get; set; }
     public string Status { get; set; } = String.Empty;
     public int ResponsibleEmployeeId { get; set; }
+    public int FromWarehouseId { get; set; }
     public List<ProductionConsumptionDto> Components { get; set; } = new List<ProductionConsumptionDto>();
 }

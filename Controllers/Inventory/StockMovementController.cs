@@ -6,23 +6,23 @@ using NavetraERP.Services;
 namespace NavetraERP.Controllers;
 
 [ApiController]
-[Route("api/production_outputs")]
-public class ProductionOutputController : ControllerBase
+[Route("api/stock_movements")]
+public class StockMovementController : ControllerBase
 {
 
-    private readonly ProductionOutputService _service;
+    private readonly StockMovementService _service;
 
-    public ProductionOutputController(ProductionOutputService service)
+    public StockMovementController(StockMovementService service)
     {
         _service = service;
     }
 
     //[Authorize]
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateProductionOutputDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateStockMovementDto dto)
     {
 
-/*         if (!User.HasClaim("permission", "CREATE:PRODUCTION_OUTPUT"))
+/*         if (!User.HasClaim("permission", "CREATE:STOCK_MOVEMENTS"))
             return Forbid(); */
 
         var result = await _service.CreateAsync(dto);
@@ -32,13 +32,13 @@ public class ProductionOutputController : ControllerBase
 
     //[Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] int? productId, [FromQuery] string? referenceDocument, [FromQuery] string? movementType, [FromQuery] DateTime? movementDate)
     {
 
-/*         if (!User.HasClaim("permission", "VIEW:PRODUCTION_OUTPUT"))
+/*         if (!User.HasClaim("permission", "VIEW:STOCK_MOVEMENTS"))
             return Forbid(); */
 
-        var result = await _service.GetAllAsync();
+        var result = await _service.GetAllAsync(productId, referenceDocument, movementType, movementDate);
 
         if (result == null)
             return NotFound();
@@ -51,7 +51,7 @@ public class ProductionOutputController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
 
-/*         if (!User.HasClaim("permission", "VIEW:PRODUCTION_OUTPUT"))
+/*         if (!User.HasClaim("permission", "VIEW:STOCK_MOVEMENTS"))
             return Forbid(); */
 
         var result = await _service.GetByIdAsync(id);
@@ -64,16 +64,16 @@ public class ProductionOutputController : ControllerBase
 
     //[Authorize]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] ProductionOutputDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] StockMovementDto dto)
     {
 
-/*         if (!User.HasClaim("permission", "UPDATE:PRODUCTION_OUTPUT"))
+/*         if (!User.HasClaim("permission", "VIEW:STOCK_MOVEMENTS"))
             return Forbid(); */
 
         var result = await _service.UpdateAsync(id, dto);
 
         if (!result)
-            return NotFound();
+            NotFound();
 
         return Ok(result);
     }
@@ -83,13 +83,13 @@ public class ProductionOutputController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
 
-/*         if (!User.HasClaim("permission", "DELETE:PRODUCTION_OUTPUT"))
+/*         if (!User.HasClaim("permission", "DELETE:STOCK_MOVEMENTS"))
             return Forbid(); */
 
         var result = await _service.DeleteAsync(id);
 
         if (!result)
-            return NotFound();
+            NotFound();
 
         return Ok(result);
     }

@@ -64,8 +64,74 @@ public class GoodsReceiptService
                     QuantityReceived = item.QuantityReceived,
                     BatchNumber = item.BatchNumber
                 }, transaction);
-            }
 
+                const string insertStockMovement = @"
+                    INSERT INTO StockMovements (
+                        product_id,
+                        to_warehouse_id,
+                        movement_type,
+                        quantity,
+                        reference_document,
+                        movement_date,
+                        performed_by_Id
+                    )
+                    VALUES (
+                        @ProductId,
+                        @ToWarehouseId,
+                        'in',
+                        @Quantity,
+                        @ReferenceDocument,
+                        @MovementDate,
+                        @PerformedBy
+                    )";
+
+                var stockMovementResult = await connection.ExecuteScalarAsync<int>(insertStockMovement, new
+                {
+                    ProductId = item.ProductId,
+                    ToWarehouseId = dto.WarehouseId,
+                    Quantity = item.QuantityReceived,
+                    ReferenceDocument = $"GR-{result.ToString().PadLeft(5, '0')}",
+                    MovementDate = dto.ReceiptDate,
+                    PerformedBy = dto.ReceivedBy
+                }, transaction);
+
+                const string upsertInventoryItem = @"
+                    IF EXISTS (SELECT 1 FROM InventoryItems WHERE product_id = @ProductId AND warehouse_id = @WarehouseId)
+                    BEGIN
+                        UPDATE InventoryItems 
+                        SET 
+                            quantity_on_hand = quantity_on_hand + @QuantityOnHand,
+                            last_updated = GETDATE()
+                        WHERE product_id = @ProductId AND warehouse_id = @WarehouseId
+                    END
+                    ELSE
+                    BEGIN
+                        INSERT INTO InventoryItems (
+                            product_id, 
+                            warehouse_id, 
+                            quantity_on_hand,
+                            reorder_level,
+                            batch_number,
+                            last_updated
+                        )
+                        VALUES (
+                            @ProductId, 
+                            @WarehouseId, 
+                            @QuantityOnHand,
+                            0,
+                            @BatchNumber,
+                            GETDATE()
+                        )
+                    END";
+
+                await connection.ExecuteAsync(upsertInventoryItem, new
+                {
+                    ProductId = item.ProductId,
+                    WarehouseId = dto.WarehouseId,
+                    QuantityOnHand = item.QuantityReceived,
+                    BatchNumber = item.BatchNumber
+                }, transaction);
+            }
 
             transaction.Commit();
 
@@ -154,6 +220,7 @@ public class GoodsReceiptService
                     gri.product_id AS ProductId,
                     p.sku AS ProductSku,
                     p.name AS ProductName,
+                    p.unit AS ProductUnit,
                     gri.quantity_received AS QuantityReceived,
                     gri.batch_number AS BatchNumber
                 FROM GoodsReceiptItems gri
@@ -178,7 +245,7 @@ public class GoodsReceiptService
         }
     }
 
-    public async Task<bool> DeleteAsync(int id)
+/*     public async Task<bool> DeleteAsync(int id)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
@@ -206,6 +273,106 @@ public class GoodsReceiptService
             {
                 id
             }, transaction);
+
+            transaction.Commit();
+
+            return rowsAffected > 0;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
+    } */
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
+        await connection.OpenAsync();
+        using var transaction = connection.BeginTransaction();
+
+        try
+        {
+            // A bizonylatszám generálása a kereséshez (pl. GR-00123)
+            // FIGYELEM: Ellenőrizd, hogy nálad mi a prefix (GR, REC, stb.)!
+            var referenceDocument = $"GR-{id.ToString().PadLeft(5, '0')}";
+
+            // ---------------------------------------------------------
+            // 1. LÉPÉS: Megkeressük, melyik raktárba érkezett az áru
+            // ---------------------------------------------------------
+            // Feltételezzük, hogy a StockMovements táblában a bevételezésnél 
+            // a 'to_warehouse_id' vagy 'warehouse_id' van kitöltve.
+            // Ha a GoodsReceipts táblában van warehouse_id, azt is lekérheted inkább.
+            const string getWarehouseQuery = @"
+                SELECT TOP 1 to_warehouse_id 
+                FROM StockMovements 
+                WHERE reference_document = @ReferenceDocument";
+
+            var warehouseId = await connection.ExecuteScalarAsync<int?>(
+                getWarehouseQuery, 
+                new { ReferenceDocument = referenceDocument }, 
+                transaction
+            );
+
+            // ---------------------------------------------------------
+            // 2. LÉPÉS: Lekérjük a tételeket, amiket TÖRÖLNI akarunk
+            // ---------------------------------------------------------
+            const string getItemsQuery = @"
+                SELECT product_id AS ProductId, quantity_received AS QuantityReceived 
+                FROM GoodsReceiptItems 
+                WHERE goods_receipt_id = @id";
+
+            var items = await connection.QueryAsync<dynamic>(getItemsQuery, new { id }, transaction);
+
+            // ---------------------------------------------------------
+            // 3. LÉPÉS: Készlet KORRIGÁLÁSA (Levonás!)
+            // ---------------------------------------------------------
+            if (warehouseId.HasValue && items.Any())
+            {
+                const string reduceInventoryItem = @"
+                    UPDATE InventoryItems 
+                    SET 
+                        quantity_on_hand = quantity_on_hand - @QuantityToRemove, -- Itt kivonjuk!
+                        last_updated = GETDATE()
+                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+
+                foreach (var item in items)
+                {
+                    await connection.ExecuteAsync(reduceInventoryItem, new
+                    {
+                        ProductId = item.ProductId,
+                        WarehouseId = warehouseId.Value,
+                        QuantityToRemove = item.QuantityReceived
+                    }, transaction);
+                }
+            }
+
+            // ---------------------------------------------------------
+            // 4. LÉPÉS: Készletmozgás napló törlése
+            // ---------------------------------------------------------
+            const string deleteStockMovements = @"
+                DELETE FROM StockMovements 
+                WHERE reference_document = @ReferenceDocument";
+
+            await connection.ExecuteAsync(deleteStockMovements, new { ReferenceDocument = referenceDocument }, transaction);
+
+            // ---------------------------------------------------------
+            // 5. LÉPÉS: Bevételezés tételek törlése
+            // ---------------------------------------------------------
+            const string deleteGoodsReceiptItems = @"
+                DELETE FROM GoodsReceiptItems 
+                WHERE goods_receipt_id = @id";
+
+            await connection.ExecuteAsync(deleteGoodsReceiptItems, new { id }, transaction);
+
+            // ---------------------------------------------------------
+            // 6. LÉPÉS: Bevételezés fejléc törlése
+            // ---------------------------------------------------------
+            const string deleteGoodsReceipt = @"
+                DELETE FROM GoodsReceipts 
+                WHERE id = @id";
+
+            var rowsAffected = await connection.ExecuteAsync(deleteGoodsReceipt, new { id }, transaction);
 
             transaction.Commit();
 

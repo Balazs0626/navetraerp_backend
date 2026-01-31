@@ -72,6 +72,47 @@ public class ProductionOrderService
                     WarehouseId = item.WarehouseId,
                     DateUsed = item.DateUsed
                 }, transaction);
+
+                const string insertStockMovement = @"
+                    INSERT INTO StockMovements (
+                        product_id,
+                        from_warehouse_id,
+                        movement_type,
+                        quantity,
+                        reference_document,
+                        movement_date
+                    )
+                    VALUES (
+                        @ProductId,
+                        @FromWarehouseId,
+                        'out',
+                        @Quantity,
+                        @ReferenceDocument,
+                        @MovementDate
+                    )";
+
+                var stockMovementResult = await connection.ExecuteScalarAsync<int>(insertStockMovement, new
+                {
+                    ProductId = item.ComponentProductId,
+                    FromWarehouseId = item.WarehouseId,
+                    Quantity = item.QuantityUsed,
+                    ReferenceDocument = $"MO-{result.ToString().PadLeft(5, '0')}",
+                    MovementDate = dto.StartDate
+                }, transaction);
+
+                const string updateInventoryItem = @"
+                    UPDATE InventoryItems 
+                    SET 
+                        quantity_on_hand = quantity_on_hand - @QuantityOnHand,
+                        last_updated = GETDATE()
+                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+
+                await connection.ExecuteAsync(updateInventoryItem, new
+                {
+                    ProductId = item.ComponentProductId,
+                    WarehouseId = item.WarehouseId,
+                    QuantityOnHand = item.QuantityUsed
+                }, transaction);
             }
 
             transaction.Commit();
@@ -148,7 +189,7 @@ public class ProductionOrderService
 
         foreach (var item in result)
         {
-            item.ReceiptNumber = $"PRO-{item.Id.ToString().PadLeft(5, '0')}";
+            item.ReceiptNumber = $"MO-{item.Id.ToString().PadLeft(5, '0')}";
         }
 
         return result;
@@ -188,7 +229,7 @@ public class ProductionOrderService
 
             if (result != null)
             {
-                result.ReceiptNumber = $"PRO-{id.ToString().PadLeft(5, '0')}";
+                result.ReceiptNumber = $"MO-{id.ToString().PadLeft(5, '0')}";
             }
 
             const string productionConsumptionsQuery = @"
@@ -225,7 +266,7 @@ public class ProductionOrderService
         }
     }
 
-    public async Task<bool> UpdateAsync(int id, ProductionOrderDto dto)
+    /* public async Task<bool> UpdateAsync(int id, ProductionOrderDto dto)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
@@ -300,9 +341,140 @@ public class ProductionOrderService
             transaction.Rollback();
             throw;
         }
-    }
+    } */
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> UpdateAsync(int id, ProductionOrderDto dto)
+    {
+        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
+        await connection.OpenAsync();
+        using var transaction = connection.BeginTransaction();
+
+        var rowsAffected = 0;
+
+        try
+        {
+            var referenceDocument = $"MO-{id.ToString().PadLeft(5, '0')}";
+
+            const string getOldItemsQuery = @"
+                SELECT 
+                    component_product_id AS ComponentProductId, 
+                    quantity_used AS QuantityUsed,
+                    warehouse_id AS WarehouseId
+                FROM ProductionConsumptions
+                WHERE production_order_id = @id";
+
+            var oldItems = await connection.QueryAsync<ProductionConsumptionDto>(getOldItemsQuery, new { id }, transaction);
+
+            if (oldItems.Any())
+            {
+                const string restoreInventoryItem = @"
+                    UPDATE InventoryItems 
+                    SET 
+                        quantity_on_hand = quantity_on_hand + @QuantityToRestore,
+                        last_updated = GETDATE()
+                    WHERE product_id = @ProductId AND warehouse_id = @OriginalWarehouseId";
+
+                foreach (var oldItem in oldItems)
+                {
+                    await connection.ExecuteAsync(restoreInventoryItem, new
+                    {
+                        ProductId = oldItem.ComponentProductId,
+                        OriginalWarehouseId = oldItem.WarehouseId, 
+                        QuantityToRestore = oldItem.QuantityUsed
+                    }, transaction);
+                }
+            }
+
+            const string updateProductionOrder = @"
+                UPDATE ProductionOrders
+                SET
+                    product_id = @ProductId,
+                    planned_quantity = @PlannedQuantity,
+                    start_date = @StartDate,
+                    end_date = @EndDate,
+                    status = @Status,
+                    responsible_employee_id = @ResponsibleEmployeeId
+                WHERE id = @id";
+
+            var parameters = new DynamicParameters(dto);
+            parameters.Add("@id", id);
+            rowsAffected = await connection.ExecuteAsync(updateProductionOrder, parameters, transaction);
+
+            if (dto.Components != null)
+            {
+                var deleteSalesOrderItemQuery = "DELETE FROM ProductionConsumptions WHERE production_order_id = @id";
+                await connection.ExecuteAsync(deleteSalesOrderItemQuery, new { id }, transaction);
+
+                var deleteStockMovementQuery = "DELETE FROM StockMovements WHERE reference_document = @ReferenceDocument";
+                await connection.ExecuteAsync(deleteStockMovementQuery, new { ReferenceDocument = referenceDocument }, transaction);
+
+                foreach (var item in dto.Components)
+                {
+                    const string insertProductionConsumption = @"
+                    INSERT INTO ProductionConsumptions (
+                        production_order_id,
+                        component_product_id,
+                        quantity_used,
+                        warehouse_id,
+                        date_used
+                    )
+                    VALUES (
+                        @ProductionOrderId,
+                        @ComponentProductId,
+                        @QuantityUsed,
+                        @WarehouseId,
+                        @DateUsed
+                    )";
+
+                    var itemResult = await connection.ExecuteScalarAsync<int>(insertProductionConsumption, new
+                    {
+                        ProductionOrderId = id,
+                        ComponentProductId = item.ComponentProductId,
+                        QuantityUsed = item.QuantityUsed,
+                        WarehouseId = item.WarehouseId,
+                        DateUsed = item.DateUsed
+                    }, transaction);
+
+                    const string insertStockMovement = @"
+                        INSERT INTO StockMovements (product_id, from_warehouse_id, movement_type, quantity, reference_document, movement_date)
+                        VALUES (@ProductId, @FromWarehouseId, 'out', @Quantity, @ReferenceDocument, @MovementDate)";
+
+                    await connection.ExecuteAsync(insertStockMovement, new
+                    {
+                        ProductId = item.ComponentProductId,
+                        FromWarehouseId = item.WarehouseId,
+                        Quantity = item.QuantityUsed,
+                        ReferenceDocument = referenceDocument,
+                        MovementDate = dto.StartDate
+                    }, transaction);
+
+                    const string updateInventoryItem = @"
+                        UPDATE InventoryItems 
+                        SET 
+                            quantity_on_hand = quantity_on_hand - @QuantityOnHand,
+                            last_updated = GETDATE()
+                        WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+
+                    await connection.ExecuteAsync(updateInventoryItem, new
+                    {
+                        ProductId = item.ComponentProductId,
+                        WarehouseId = item.WarehouseId,
+                        QuantityOnHand = item.QuantityUsed
+                    }, transaction);
+                }
+            }
+
+            transaction.Commit();
+            return rowsAffected > 0;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }   
+
+/*     public async Task<bool> DeleteAsync(int id)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
@@ -330,6 +502,89 @@ public class ProductionOrderService
             {
                 id
             }, transaction);
+
+            transaction.Commit();
+
+            return rowsAffected > 0;
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
+    } */
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
+        await connection.OpenAsync();
+        using var transaction = connection.BeginTransaction();
+
+        try
+        {
+            var referenceDocument = $"MO-{id.ToString().PadLeft(5, '0')}";
+
+            const string getItemsQuery = @"
+                SELECT 
+                    component_product_id AS ComponentProductId, 
+                    quantity_used AS QuantityUsed,
+                    warehouse_id AS WarehouseId
+                FROM ProductionConsumptions 
+                WHERE production_order_id = @id";
+
+            var items = await connection.QueryAsync<ProductionConsumptionDto>(getItemsQuery, new { id }, transaction);
+
+            // ---------------------------------------------------------
+            // 3. LÉPÉS: Készlet visszatöltése (Kompenzálás)
+            // ---------------------------------------------------------
+            // Csak akkor, ha volt mozgás és van mit visszatölteni
+            if (items.Any())
+            {
+                const string restoreInventoryItem = @"
+                    UPDATE InventoryItems 
+                    SET 
+                        quantity_on_hand = quantity_on_hand + @QuantityToRestore,
+                        last_updated = GETDATE()
+                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+
+                foreach (var item in items)
+                {
+                    await connection.ExecuteAsync(restoreInventoryItem, new
+                    {
+                        ProductId = item.ComponentProductId,
+                        WarehouseId = item.WarehouseId,
+                        QuantityToRestore = item.QuantityUsed
+                    }, transaction);
+                }
+            }
+
+            // ---------------------------------------------------------
+            // 4. LÉPÉS: Készletmozgás napló törlése
+            // ---------------------------------------------------------
+            // Ha nem törlöd ki, ott maradnak "árva" rekordok, amik egy nem létező rendelésre hivatkoznak.
+            const string deleteStockMovements = @"
+                DELETE FROM StockMovements 
+                WHERE reference_document = @ReferenceDocument";
+
+            await connection.ExecuteAsync(deleteStockMovements, new { ReferenceDocument = referenceDocument }, transaction);
+
+            // ---------------------------------------------------------
+            // 5. LÉPÉS: Rendelés tételek törlése
+            // ---------------------------------------------------------
+            const string deleteProductionConsumption = @"
+                DELETE FROM ProductionConsumptions 
+                WHERE production_order_id = @id";
+
+            await connection.ExecuteAsync(deleteProductionConsumption, new { id }, transaction);
+
+            // ---------------------------------------------------------
+            // 6. LÉPÉS: Rendelés fejléc törlése
+            // ---------------------------------------------------------
+            const string deleteProductionOrder = @"
+                DELETE FROM ProductionOrders 
+                WHERE id = @id";
+
+            var rowsAffected = await connection.ExecuteAsync(deleteProductionOrder, new { id }, transaction);
 
             transaction.Commit();
 
