@@ -140,7 +140,8 @@ public class SalesOrderService
                 id AS Id,
                 order_date AS OrderDate,
                 required_delivery_date AS RequiredDeliveryDate,
-                status AS Status
+                status AS Status,
+                total_amount AS TotalAmount
             FROM SalesOrders
             WHERE 1 = 1";
 
@@ -210,6 +211,7 @@ public class SalesOrderService
                     c.id AS CustomerId,
                     c.name AS CustomerName,
                     c.tax_number AS CustomerTaxNumber,
+                    'eutax' AS CustomerEuTaxNumber,
                     ba.country + ', ' + ba.region AS CustomerBillingAddress_1,
                     ba.post_code + ' ' + ba.city + ', ' + ba.address_1 + ' ' + ISNULL(ba.address_2, '') AS CustomerBillingAddress_2,
                     sa.country + ', ' + sa.region AS CustomerShippingAddress_1,

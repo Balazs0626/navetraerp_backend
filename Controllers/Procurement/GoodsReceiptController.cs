@@ -32,13 +32,13 @@ public class GoodsReceiptController : ControllerBase
 
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] int? purchaseOrderId, [FromQuery] int? warehouseId, [FromQuery] DateTime? date)
+    public async Task<IActionResult> GetAll([FromQuery] string? receiptNumber, [FromQuery] string? purchaseOrderReceiptNumber, [FromQuery] int? warehouseId, [FromQuery] DateTime? date)
     {
 
         if (!User.HasClaim("permission", "VIEW:GOODS_RECEIPTS"))
             return Forbid();
 
-        var result = await _service.GetAllAsync(purchaseOrderId, warehouseId, date);
+        var result = await _service.GetAllAsync(receiptNumber, purchaseOrderReceiptNumber, warehouseId, date);
 
         if (result == null)
             return NotFound();

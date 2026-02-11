@@ -88,7 +88,7 @@ public class InvoiceService
 
     }
 
-    public async Task<IEnumerable<InvoiceListDto>> GetAllAsync(int? id = null, DateTime? invoiceDate = null, string? status = null)
+    public async Task<IEnumerable<InvoiceListDto>> GetAllAsync(string? receiptNumber = null, DateTime? invoiceDate = null, string? status = null)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
@@ -103,10 +103,27 @@ public class InvoiceService
 
         var parameters = new DynamicParameters();
 
-        if (id != null)
+        if (!string.IsNullOrWhiteSpace(receiptNumber))
         {
-            query += " AND id = @Id";
-            parameters.Add("@Id", id);
+            var parts = receiptNumber.Split('-');
+            
+            int? searchedId = null;
+
+            if (parts.Length > 1)
+            {
+                if (int.TryParse(parts[1], out int id)) 
+                    searchedId = id;
+            }
+            else if (int.TryParse(receiptNumber, out int id))
+            {
+                searchedId = id;
+            }
+
+            if (searchedId.HasValue)
+            {
+                query += " AND id = @Id";
+                parameters.Add("@Id", searchedId.Value);
+            }
         }
 
         if (invoiceDate.HasValue)
@@ -122,6 +139,11 @@ public class InvoiceService
         }
 
         var result = await connection.QueryAsync<InvoiceListDto>(query, parameters);
+
+        foreach (var item in result)
+        {
+            item.ReceiptNumber = $"SZ-{item.Id.ToString().PadLeft(5, '0')}";
+        }
 
         return result;
     }
@@ -147,18 +169,23 @@ public class InvoiceService
                     27 AS TotalTaxRate,
                     (i.paid_amount - i.total_amount) AS TotalTax,
                     i.status AS Status,
-                    'Saját Kft.' AS SellerName,
-                    '11111111-11' AS SellerTaxNumber,
-                    'Magyarország, Vas' AS SellerAddress_1,
-                    '9600 Sárvár, Teszt utca 6.' AS SellerAddress_2,
+                    cd.name AS SellerName,
+                    cd.tax_number AS SellerTaxNumber,
+                    cd.eu_tax_number AS SellerEuTaxNumber,
+                    cd.bank_account_number AS SellerBankAccountNumber,
+                    cd.billing_country + ', ' + cd.billing_region AS SellerAddress_1,
+                    cd.billing_post_code + ' ' + cd.billing_city + ', ' + cd.billing_address_1 + ' ' + ISNULL(cd.billing_address_2, '') AS SellerAddress_2,
                     c.name AS CustomerName,
                     c.tax_number AS CustomerTaxNumber,
+                    'eutax' AS CustomerEuTaxNumber,
+                    'bankacc' AS CustomerBankAccountNumber,
                     a.country + ', ' + a.region AS CustomerAddress_1,
                     a.post_code + ' ' + a.city + ', ' + a.address_1 + ' ' + ISNULL(a.address_2, '') AS CustomerAddress_2
                 FROM Invoices i
                 JOIN SalesOrders so ON so.id = i.sales_order_id
                 JOIN Customers c ON c.id = so.customer_id
                 JOIN HR_Addresses a ON a.id = c.billing_address_id
+                CROSS JOIN CompanyData cd
                 WHERE i.id = @id";
 
             var result = await connection.QueryFirstOrDefaultAsync<InvoiceDto>(invoiceQuery, new
@@ -166,8 +193,13 @@ public class InvoiceService
                 id
             }, transaction);
 
-            result.PaidAmountText = Utils.NumberToHungarianText.ToText((int)result.PaidAmount);
+            
 
+            if (result != null)
+            {
+                result.ReceiptNumber = $"SZ-{id.ToString().PadLeft(5, '0')}";
+                result.PaidAmountText = Utils.NumberToHungarianText.ToText((int)result.PaidAmount);
+            }
             const string invoiceItemsQuery = @"
                 SELECT
                     ii.id AS Id,

@@ -90,7 +90,7 @@ public class PurchaseOrderService
 
     }
 
-    public async Task<IEnumerable<PurchaseOrderListDto>> GetAllAsync(int? id = null, DateTime? orderDate = null, string? status = null)
+    public async Task<IEnumerable<PurchaseOrderListDto>> GetAllAsync(string? receiptNumber = null, DateTime? orderDate = null, string? status = null)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
@@ -105,16 +105,33 @@ public class PurchaseOrderService
 
         var parameters = new DynamicParameters();
 
-        if (id != null)
+        if (!string.IsNullOrWhiteSpace(receiptNumber))
         {
-            query += " AND id = @Id";
-            parameters.Add("@Id", id);
+            var parts = receiptNumber.Split('-');
+            
+            int? searchedId = null;
+
+            if (parts.Length > 1)
+            {
+                if (int.TryParse(parts[1], out int id)) 
+                    searchedId = id;
+            }
+            else if (int.TryParse(receiptNumber, out int id))
+            {
+                searchedId = id;
+            }
+
+            if (searchedId.HasValue)
+            {
+                query += " AND id = @Id";
+                parameters.Add("@Id", searchedId.Value);
+            }
         }
 
         if (orderDate.HasValue)
         {
-            query += " AND order_date = @OrderDate";
-            parameters.Add("@OrderDate", orderDate.Value.Date);
+            query += " AND order_date = @InvoiceDate";
+            parameters.Add("@InvoiceDate", orderDate.Value.Date);
         }
 
         if (!string.IsNullOrWhiteSpace(status))
@@ -124,6 +141,11 @@ public class PurchaseOrderService
         }
 
         var result = await connection.QueryAsync<PurchaseOrderListDto>(query, parameters);
+
+        foreach (var item in result)
+        {
+            item.ReceiptNumber = $"PO-{item.Id.ToString().PadLeft(5, '0')}";
+        }
 
         return result;
     }
@@ -144,12 +166,18 @@ public class PurchaseOrderService
                     po.supplier_id AS SupplierId,
                     s.name AS SupplierName,
                     s.tax_number AS SupplierTaxNumber,
+                    'eutax' AS SupplierEuTaxNumber,
                     a.country AS SupplierAddressCountry,
                     a.region AS SupplierAddressRegion,
                     a.post_code AS SupplierAddressPostCode,
                     a.city AS SupplierAddressCity,
                     a.address_1 AS SupplierAddressFirstLine,
                     a.address_2 AS SupplierAddressSecondLine,
+                    cd.name AS CompanyName,
+                    cd.tax_number AS CompanyTaxNumber,
+                    cd.eu_tax_number AS CompanyEuTaxNumber,
+                    cd.billing_country + ', ' + cd.billing_region AS CompanyAddress_1,
+                    cd.billing_post_code + ' ' + cd.billing_city + ', ' + cd.billing_address_1 + ' ' + ISNULL(cd.billing_address_2, '') AS CompanyAddress_2,
                     po.order_date AS OrderDate,
                     po.expected_delivery_date AS ExpectedDeliveryDate,
                     po.status AS Status,
@@ -158,6 +186,7 @@ public class PurchaseOrderService
                 FROM PurchaseOrders po
                 JOIN Suppliers s ON s.id = po.supplier_id
                 JOIN HR_Addresses a ON a.id = s.address_id
+                CROSS JOIN CompanyData cd
                 WHERE po.id = @id";
 
             var result = await connection.QueryFirstOrDefaultAsync<PurchaseOrderDto>(purchaseOrderQuery, new
@@ -186,7 +215,11 @@ public class PurchaseOrderService
                 id
             }, transaction)).ToList();
 
-            result.Items = items;
+            if (result != null)
+            {
+                result.ReceiptNumber = $"PO-{id.ToString().PadLeft(5, '0')}";
+                result.Items = items;
+            }
 
             transaction.Commit();
 

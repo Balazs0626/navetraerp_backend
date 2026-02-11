@@ -32,13 +32,13 @@ public class StockMovementController : ControllerBase
 
     //[Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] int? productId, [FromQuery] string? referenceDocument, [FromQuery] string? movementType, [FromQuery] DateTime? movementDate)
+    public async Task<IActionResult> GetAll([FromQuery] int? productId, [FromQuery] string? referenceDocument, [FromQuery] string? movementType, [FromQuery] DateTime? movementDate, [FromQuery] DateTime? movementDateGte)
     {
 
 /*         if (!User.HasClaim("permission", "VIEW:STOCK_MOVEMENTS"))
             return Forbid(); */
 
-        var result = await _service.GetAllAsync(productId, referenceDocument, movementType, movementDate);
+        var result = await _service.GetAllAsync(productId, referenceDocument, movementType, movementDate, movementDateGte);
 
         if (result == null)
             return NotFound();

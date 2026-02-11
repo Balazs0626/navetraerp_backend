@@ -7,6 +7,7 @@ public class SalesOrderDto
     public int CustomerId { get; set; }
     public string CustomerName { get; set;} = String.Empty;
     public string CustomerTaxNumber { get; set; } = String.Empty;
+    public string CustomerEuTaxNumber { get; set; } = String.Empty;
     public string CustomerBillingAddress_1 { get; set; } = String.Empty;
     public string CustomerBillingAddress_2 { get; set; } = String.Empty;
     public string CustomerShippingAddress_1 { get; set; } = String.Empty;

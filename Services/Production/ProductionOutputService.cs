@@ -121,7 +121,7 @@ public class ProductionOutputService
 
         foreach (var item in result)
         {
-            item.ProductionOrderReceiptNumber = $"PRO-{item.ProductionOrderId.ToString().PadLeft(5, '0')}";
+            item.ProductionOrderReceiptNumber = $"MO-{item.ProductionOrderId.ToString().PadLeft(5, '0')}";
         }
 
         return result;

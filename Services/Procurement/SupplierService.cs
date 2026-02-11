@@ -14,6 +14,7 @@ public class SupplierService
         _config = config;
     }
 
+    //CreateAsync-be eu_tax_number és bank_account_number
     public async Task<int> CreateAsync(CreateSupplierDto dto)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
@@ -85,6 +86,7 @@ public class SupplierService
         return result;
     }
 
+    //GetByIdAsync-be eu_tax_number és bank_account_number
     public async Task<UpdateSupplierDto> GetByIdAsync(int id)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
@@ -116,6 +118,7 @@ public class SupplierService
         return result;
     }
 
+    //UpdateAsync-be eu_tax_number és bank_account_number
     public async Task<bool> UpdateAsync(int id, UpdateSupplierDto dto)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));

@@ -32,13 +32,13 @@ public class InvoiceController : ControllerBase
 
     //[Authorize]
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] int? id, [FromQuery] DateTime? invoiceDate, [FromQuery] string? status)
+    public async Task<IActionResult> GetAll([FromQuery] string? receiptNumber, [FromQuery] DateTime? invoiceDate, [FromQuery] string? status)
     {
 
         /* if (!User.HasClaim("permission", "VIEW:PURCHASE_ORDERS"))
             return Forbid(); */
 
-        var result = await _service.GetAllAsync(id, invoiceDate, status);
+        var result = await _service.GetAllAsync(receiptNumber, invoiceDate, status);
 
         if (result == null)
             return NotFound();

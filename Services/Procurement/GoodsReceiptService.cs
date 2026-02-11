@@ -145,7 +145,7 @@ public class GoodsReceiptService
 
     }
 
-    public async Task<IEnumerable<GoodsReceiptListDto>> GetAllAsync(int? purchaseOrderId = null, int? warehouseId = null, DateTime? date = null)
+    public async Task<IEnumerable<GoodsReceiptListDto>> GetAllAsync(string? receiptNumber = null, string? purchaseOrderReceiptNumber = null, int? warehouseId = null, DateTime? date = null)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
@@ -161,10 +161,50 @@ public class GoodsReceiptService
 
         var parameters = new DynamicParameters();
 
-        if (purchaseOrderId != null)
+        if (!string.IsNullOrWhiteSpace(receiptNumber))
         {
-            query += " AND gr.purchase_order_id = @PurchaseOrderId";
-            parameters.Add("@PurchaseOrderId", purchaseOrderId);
+            var parts = receiptNumber.Split('-');
+            
+            int? searchedId = null;
+
+            if (parts.Length > 1)
+            {
+                if (int.TryParse(parts[1], out int id)) 
+                    searchedId = id;
+            }
+            else if (int.TryParse(receiptNumber, out int id))
+            {
+                searchedId = id;
+            }
+
+            if (searchedId.HasValue)
+            {
+                query += " AND gr.id = @Id";
+                parameters.Add("@Id", searchedId.Value);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(purchaseOrderReceiptNumber))
+        {
+            var parts = purchaseOrderReceiptNumber.Split('-');
+            
+            int? searchedId = null;
+
+            if (parts.Length > 1)
+            {
+                if (int.TryParse(parts[1], out int id)) 
+                    searchedId = id;
+            }
+            else if (int.TryParse(purchaseOrderReceiptNumber, out int id))
+            {
+                searchedId = id;
+            }
+
+            if (searchedId.HasValue)
+            {
+                query += " AND gr.purchase_order_id = @PurchaseOrderId";
+                parameters.Add("@PurchaseOrderId", searchedId.Value);
+            }
         }
 
         if (warehouseId != null)
@@ -180,6 +220,12 @@ public class GoodsReceiptService
         }
 
         var result = await connection.QueryAsync<GoodsReceiptListDto>(query, parameters);
+
+        foreach (var item in result)
+        {
+            item.ReceiptNumber = $"GR-{item.Id.ToString().PadLeft(5, '0')}";
+            item.PurchaseOrderReceiptNumber = $"PO-{item.PurchaseOrderId.ToString().PadLeft(5, '0')}";
+        }
 
         return result;
     }
@@ -232,7 +278,12 @@ public class GoodsReceiptService
                 id
             }, transaction)).ToList();
 
-            result.Items = items;
+            if (result != null)
+            {
+                result.ReceiptNumber = $"GR-{id.ToString().PadLeft(5, '0')}";
+                result.PurchaseOrderReceiptNumber = $"PO-{result.PurchaseOrderId.ToString().PadLeft(5, '0')}";
+                result.Items = items;
+            }
 
             transaction.Commit();
 

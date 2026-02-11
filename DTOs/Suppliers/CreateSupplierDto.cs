@@ -4,6 +4,8 @@ public class CreateSupplierDto
 {
     public string Name { get; set; } = String.Empty;
     public string TaxNumber { get; set; } = String.Empty;
+    public string EuTaxNumber { get; set; } = String.Empty;
+    public string BankAccountNumber { get; set; } = String.Empty;
     public string ContactPerson { get; set; } = String.Empty;
     public string Email { get; set; } = String.Empty;
     public string PhoneNumber { get; set; } = String.Empty;

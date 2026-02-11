@@ -5,6 +5,8 @@ public class UpdateCustomerDto
     public int Id { get; set; }
     public string Name { get; set; } = String.Empty;
     public string TaxNumber { get; set; } = String.Empty;
+    public string EuTaxNumber { get; set; } = String.Empty;
+    public string BankAccountNumber { get; set; } = String.Empty;
     public string Email { get; set; } = String.Empty;
     public string PhoneNumber { get; set; } = String.Empty;
     public int BillingAddressId { get; set; }

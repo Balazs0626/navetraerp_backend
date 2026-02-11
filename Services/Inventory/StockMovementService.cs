@@ -55,6 +55,72 @@ public class StockMovementService
 
             var result = await connection.ExecuteScalarAsync<int>(insert, parameters, transaction);
 
+            if (dto.MovementType == "transfer")
+            {
+                const string updateFromInventoryItem = @"
+                    UPDATE InventoryItems 
+                    SET 
+                        quantity_on_hand = quantity_on_hand - @QuantityOnHand,
+                        last_updated = GETDATE()
+                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+
+                await connection.ExecuteAsync(updateFromInventoryItem, new
+                {
+                    ProductId = dto.ProductId,
+                    WarehouseId = dto.FromWarehouseId,
+                    QuantityOnHand = dto.Quantity
+                }, transaction);
+
+                const string getBatchNumberQuery = @"
+                    SELECT TOP 1
+                        batch_number
+                    FROM InventoryItems
+                    WHERE warehouse_id = @WarehouseId AND product_id = @ProductId";
+
+                var batchNumber = await connection.QueryFirstOrDefaultAsync<string?>(getBatchNumberQuery, new
+                {
+                    WarehouseId = dto.FromWarehouseId,
+                    ProductId = dto.ProductId
+                }, transaction);
+
+                const string upsertInventoryItem = @"
+                    IF EXISTS (SELECT 1 FROM InventoryItems WHERE product_id = @ProductId AND warehouse_id = @WarehouseId)
+                    BEGIN
+                        UPDATE InventoryItems 
+                        SET 
+                            quantity_on_hand = quantity_on_hand + @QuantityOnHand,
+                            last_updated = GETDATE()
+                        WHERE product_id = @ProductId AND warehouse_id = @WarehouseId
+                    END
+                    ELSE
+                    BEGIN
+                        INSERT INTO InventoryItems (
+                            product_id, 
+                            warehouse_id, 
+                            quantity_on_hand,
+                            reorder_level,
+                            batch_number,
+                            last_updated
+                        )
+                        VALUES (
+                            @ProductId, 
+                            @WarehouseId, 
+                            @QuantityOnHand,
+                            0,
+                            @BatchNumber,
+                            GETDATE()
+                        )
+                    END";
+
+                await connection.ExecuteAsync(upsertInventoryItem, new
+                {
+                    ProductId = dto.ProductId,
+                    WarehouseId = dto.ToWarehouseId,
+                    QuantityOnHand = dto.Quantity,
+                    BatchNumber = batchNumber
+                }, transaction);
+            }
+
             transaction.Commit();
 
             return result;
@@ -67,7 +133,7 @@ public class StockMovementService
 
     }
 
-    public async Task<IEnumerable<StockMovementListDto>> GetAllAsync(int? productId = null, string? referenceDocument = null, string? movementType = null, DateTime? movementDate = null)
+    public async Task<IEnumerable<StockMovementListDto>> GetAllAsync(int? productId = null, string? referenceDocument = null, string? movementType = null, DateTime? movementDate = null, DateTime? movementDateGte = null)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
@@ -108,6 +174,12 @@ public class StockMovementService
         {
             query += " AND sm.movement_type = @MovementType";
             parameters.Add("@MovementType", movementType);
+        }
+
+        if (movementDateGte.HasValue)
+        {
+            query += " AND sm.movement_date >= @StartDate";
+            parameters.Add("StartDate", movementDateGte.Value.Date);
         }
 
         var result = await connection.QueryAsync<StockMovementListDto>(query, parameters);
@@ -160,6 +232,46 @@ public class StockMovementService
 
         try
         {
+
+            const string getOldDataQuery = @"
+            SELECT 
+                movement_type, 
+                quantity, 
+                product_id, 
+                from_warehouse_id, 
+                to_warehouse_id 
+            FROM StockMovements 
+            WHERE id = @id";
+
+            var oldMove = await connection.QueryFirstOrDefaultAsync<dynamic>(getOldDataQuery, new 
+            { 
+                id 
+            }, transaction);
+
+            if (oldMove != null && oldMove.movement_type == "transfer")
+            {
+                // Ha transfer volt, akkor "visszacsináljuk":
+                // 1. Ahol levontunk (From), oda visszaadjuk (+)
+                if (oldMove.from_warehouse_id != null)
+                {
+                    await connection.ExecuteAsync(@"
+                        UPDATE InventoryItems 
+                        SET quantity_on_hand = quantity_on_hand + @Qty, last_updated = GETDATE()
+                        WHERE product_id = @Pid AND warehouse_id = @Wid", 
+                        new { Qty = oldMove.quantity, Pid = oldMove.product_id, Wid = oldMove.from_warehouse_id }, transaction);
+                }
+
+                // 2. Ahol hozzáadtunk (To), onnan levonjuk (-)
+                if (oldMove.to_warehouse_id != null)
+                {
+                    await connection.ExecuteAsync(@"
+                        UPDATE InventoryItems 
+                        SET quantity_on_hand = quantity_on_hand - @Qty, last_updated = GETDATE()
+                        WHERE product_id = @Pid AND warehouse_id = @Wid", 
+                        new { Qty = oldMove.quantity, Pid = oldMove.product_id, Wid = oldMove.to_warehouse_id }, transaction);
+                }
+            }
+
             const string update = @"
                 UPDATE StockMovements
                 SET
@@ -178,6 +290,37 @@ public class StockMovementService
 
             var rowsAffected = await connection.ExecuteAsync(update, parameters, transaction);
 
+            if (dto.MovementType == "transfer")
+            {
+                const string updateFromInventoryItem = @"
+                    UPDATE InventoryItems 
+                    SET 
+                        quantity_on_hand = quantity_on_hand - @QuantityOnHand,
+                        last_updated = GETDATE()
+                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+
+                await connection.ExecuteAsync(updateFromInventoryItem, new
+                {
+                    ProductId = dto.ProductId,
+                    WarehouseId = dto.FromWarehouseId,
+                    QuantityOnHand = dto.Quantity
+                }, transaction);
+
+                const string updateToInventoryItem = @"
+                    UPDATE InventoryItems 
+                    SET 
+                        quantity_on_hand = quantity_on_hand + @QuantityOnHand,
+                        last_updated = GETDATE()
+                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+
+                await connection.ExecuteAsync(updateToInventoryItem, new
+                {
+                    ProductId = dto.ProductId,
+                    WarehouseId = dto.ToWarehouseId,
+                    QuantityOnHand = dto.Quantity,
+                }, transaction);
+            }
+
             transaction.Commit();
 
             return rowsAffected > 0;
@@ -193,16 +336,67 @@ public class StockMovementService
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
-        const string delete = @"
-            DELETE FROM StockMovements 
-            WHERE id = @id";
+        await connection.OpenAsync();
 
-        var rowsAffected = await connection.ExecuteAsync(delete, new
+        using var transaction = connection.BeginTransaction();
+
+        try
         {
-            id
-        });
+            const string getOldDataQuery = @"
+                SELECT 
+                    movement_type, 
+                    quantity, 
+                    product_id, 
+                    from_warehouse_id, 
+                    to_warehouse_id 
+                FROM StockMovements 
+                WHERE id = @id";
 
-        return rowsAffected > 0;
+            var oldMove = await connection.QueryFirstOrDefaultAsync<dynamic>(getOldDataQuery, new 
+            { 
+                id 
+            }, transaction);
+
+            if (oldMove != null && oldMove.movement_type == "transfer")
+            {
+                if (oldMove.from_warehouse_id != null)
+                {
+                    await connection.ExecuteAsync(@"
+                        UPDATE InventoryItems 
+                        SET quantity_on_hand = quantity_on_hand + @Qty, last_updated = GETDATE()
+                        WHERE product_id = @Pid AND warehouse_id = @Wid", 
+                        new { Qty = oldMove.quantity, Pid = oldMove.product_id, Wid = oldMove.from_warehouse_id }, transaction);
+                }
+
+                if (oldMove.to_warehouse_id != null)
+                {
+                    await connection.ExecuteAsync(@"
+                        UPDATE InventoryItems 
+                        SET quantity_on_hand = quantity_on_hand - @Qty, last_updated = GETDATE()
+                        WHERE product_id = @Pid AND warehouse_id = @Wid", 
+                        new { Qty = oldMove.quantity, Pid = oldMove.product_id, Wid = oldMove.to_warehouse_id }, transaction);
+                }
+            }
+
+            const string delete = @"
+                DELETE FROM StockMovements 
+                WHERE id = @id";
+
+            var rowsAffected = await connection.ExecuteAsync(delete, new
+            {
+                id
+            }, transaction);
+
+            transaction.Commit();
+
+            return rowsAffected > 0;
+
+        }
+        catch (Exception)
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 
 }
