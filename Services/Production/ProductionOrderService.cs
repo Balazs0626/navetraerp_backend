@@ -219,7 +219,7 @@ public class ProductionOrderService
                     e.first_name + ' ' + e.last_name AS ResponsibleEmployeeName
                 FROM ProductionOrders po
                 JOIN Products p ON p.id = po.product_id
-                JOIN HR_Employee e ON e.id = po.responsible_employee_id
+                JOIN Employees e ON e.id = po.responsible_employee_id
                 WHERE po.id = @id";
 
             var result = await connection.QueryFirstOrDefaultAsync<ProductionOrderDto>(productionOrderQuery, new

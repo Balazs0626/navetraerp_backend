@@ -19,7 +19,10 @@ public class UserController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(RegisterRequest req)
     {
-        var results = await _service.CreateAsync(req.Username, req.Password, req.RoleId, req.Email);
+
+        var hash = BCrypt.Net.BCrypt.HashPassword(req.Password);
+
+        var results = await _service.CreateAsync(req.Username, hash, req.RoleId, req.Email);
 
         if (results == null) NotFound();
 

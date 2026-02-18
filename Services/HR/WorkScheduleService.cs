@@ -25,7 +25,7 @@ public class WorkScheduleService
         {
 
             const string insert = @"
-                INSERT INTO HR_EmployeeShifts (employee_id, shift_id, date)
+                INSERT INTO EmployeeShifts (employee_id, shift_id, date)
                 VALUES (@EmployeeId, @ShiftId, @Date);
                 SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -54,9 +54,9 @@ public class WorkScheduleService
                 es.date AS Date,
                 s.start_time AS StartTime,
                 s.end_time AS EndTime
-            FROM HR_EmployeeShifts es
-            JOIN HR_Employee e ON e.id = es.employee_id
-            JOIN HR_Shifts s ON s.id = es.shift_id
+            FROM EmployeeShifts es
+            JOIN Employees e ON e.id = es.employee_id
+            JOIN Shifts s ON s.id = es.shift_id
             WHERE 1 = 1";
 
         var parameters = new DynamicParameters();
@@ -85,7 +85,7 @@ public class WorkScheduleService
         using var connenction = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string delete = @"
-            DELETE FROM HR_EmployeeShifts
+            DELETE FROM EmployeeShifts
             WHERE id = @id";
 
         var rowsAffected = await connenction.ExecuteAsync(delete, new

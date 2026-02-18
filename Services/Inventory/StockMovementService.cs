@@ -211,7 +211,7 @@ public class StockMovementService
             JOIN Products p ON p.id = sm.product_id
             LEFT JOIN Warehouses fw ON fw.id = sm.from_warehouse_id
             LEFT JOIN Warehouses tw ON tw.id = sm.to_warehouse_id
-            LEFT JOIN HR_Employee e ON e.id = sm.performed_by_id
+            LEFT JOIN Employees e ON e.id = sm.performed_by_id
             WHERE sm.id = @id";
 
         var result = await connection.QueryFirstOrDefaultAsync<StockMovementDto>(query, new

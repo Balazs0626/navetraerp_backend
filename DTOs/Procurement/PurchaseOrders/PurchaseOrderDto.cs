@@ -23,6 +23,5 @@ public class PurchaseOrderDto
     public DateTime ExpectedDeliveryDate { get; set; }
     public string Status { get; set; } = String.Empty;
     public decimal TotalAmount { get; set; }
-    public string Currency { get; set; } = String.Empty;
     public List<PurchaseOrderItemDto> Items { get; set; } = new List<PurchaseOrderItemDto>();
 }

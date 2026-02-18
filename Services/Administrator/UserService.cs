@@ -197,4 +197,43 @@ public class UserService
     }
 
     #endregion
+
+    #region Password Reset
+
+    public async Task<User> GetByEmailAsync(string email)
+    {
+        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
+        const string query = "SELECT id, username, email FROM Users WHERE email = @email";
+        return await connection.QueryFirstOrDefaultAsync<User>(query, new { email });
+    }
+
+    public async Task SaveResetTokenAsync(int userId, string token, DateTime expires)
+    {
+        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
+        const string update = @"
+            UPDATE Users 
+            SET reset_token = @token, 
+                reset_token_expires = @expires 
+            WHERE id = @userId";
+        await connection.ExecuteAsync(update, new { userId, token, expires });
+    }
+
+    public async Task<bool> ResetPasswordAsync(string email, string token, string newHash)
+    {
+        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
+        // Egyszerre ellenőrizzük a tokent és a lejárati időt
+        const string query = @"
+            UPDATE Users 
+            SET password_hash = @newHash, 
+                reset_token = NULL, 
+                reset_token_expires = NULL 
+            WHERE email = @email 
+            AND reset_token = @token 
+            AND reset_token_expires > GETUTCDATE()";
+
+        var rowsAffected = await connection.ExecuteAsync(query, new { email, token, newHash });
+        return rowsAffected > 0;
+    }
+
+    #endregion
 }

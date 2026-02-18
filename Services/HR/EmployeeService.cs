@@ -25,14 +25,14 @@ public class EmployeeService
         try
         {
             const string insertAddress = @"
-                INSERT INTO HR_Addresses(country, region, post_code, city, address_1, address_2)
+                INSERT INTO Addresses(country, region, post_code, city, address_1, address_2)
                 VALUES (@AddressCountry, @AddressRegion, @AddressPostCode, @AddressCity, @AddressFirstLine, @AddressSecondLine);
                 SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
             var addressResult = await connection.ExecuteScalarAsync<int>(insertAddress, dto, transaction);
 
             const string insertTempAddress = @"
-                INSERT INTO HR_Addresses(country, region, post_code, city, address_1, address_2)
+                INSERT INTO Addresses(country, region, post_code, city, address_1, address_2)
                 VALUES (@TempAddressCountry, @TempAddressRegion, @TempAddressPostCode, @TempAddressCity, @TempAddressFirstLine, @TempAddressSecondLine);
                 SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -45,14 +45,15 @@ public class EmployeeService
 
 
             const string insertEmployee = @"
-                INSERT INTO HR_Employee (
+                INSERT INTO Employees (
                     first_name,
                     last_name, 
                     birth_date, 
                     id_number, 
                     residence_number, 
                     health_insurance_number, 
-                    tax_id_number, 
+                    tax_id_number,
+                    bank_account_number, 
                     address_id, 
                     temp_address_id, 
                     hire_date, 
@@ -72,6 +73,7 @@ public class EmployeeService
                     @ResidenceNumber,
                     @HealthInsuranceNumber,
                     @TaxIdNumber,
+                    @BankAccountNumber,
                     @AddressId,
                     @TempAddressId,
                     @HireDate,
@@ -120,9 +122,9 @@ public class EmployeeService
                     WHEN e.user_id IS NOT NULL THEN 1
                     ELSE 0
                 END AS HasUser
-            FROM HR_Employee e
-            JOIN HR_Departments d ON e.department_id = d.id
-            JOIN HR_Positions p ON e.position_id = p.id
+            FROM Employees e
+            JOIN Departments d ON e.department_id = d.id
+            JOIN Positions p ON e.position_id = p.id
             WHERE 1 = 1";
 
         var parameters = new DynamicParameters();
@@ -164,6 +166,7 @@ public class EmployeeService
                 e.residence_number AS ResidenceNumber,
                 e.health_insurance_number AS HealthInsuranceNumber,
                 e.tax_id_number AS TaxIdNumber,
+                e.bank_account_number AS BankAccountNumber,
                 e.hire_date AS HireDate,
                 e.department_id AS DepartmentId,
                 e.position_id AS PositionId,
@@ -186,9 +189,9 @@ public class EmployeeService
                 t.city AS TempAddressCity,
                 t.address_1 AS TempAddressFirstLine,
                 t.address_2 AS TempAddressSecondLine
-            FROM HR_Employee e
-            JOIN HR_Addresses a ON a.id = e.address_id
-            LEFT JOIN HR_Addresses t ON t.id = e.temp_address_id
+            FROM Employees e
+            JOIN Addresses a ON a.id = e.address_id
+            LEFT JOIN Addresses t ON t.id = e.temp_address_id
             WHERE e.id = @id";
 
         var result = await connection.QueryFirstOrDefaultAsync<EmployeeDto>(query, new
@@ -212,7 +215,7 @@ public class EmployeeService
         try
         {
             const string updateEmployee = @"
-                UPDATE HR_Employee
+                UPDATE Employees
                 SET
                     first_name = @FirstName,
                     last_name = @LastName,
@@ -221,6 +224,7 @@ public class EmployeeService
                     residence_number = @ResidenceNumber,
                     health_insurance_number = @HealthInsuranceNumber,
                     tax_id_number = @TaxIdNumber,
+                    bank_account_number = @BankAccountNumber,
                     hire_date = @HireDate,
                     department_id = @DepartmentId,
                     position_id = @PositionId,
@@ -237,7 +241,7 @@ public class EmployeeService
             rowsAffected = await connection.ExecuteAsync(updateEmployee, parameters, transaction);
 
             const string updateAddress = @"
-                UPDATE HR_Addresses
+                UPDATE Addresses
                 SET
                     country = @AddressCountry,
                     region = @AddressRegion,
@@ -254,7 +258,7 @@ public class EmployeeService
             if (dto.TempAddressId != null)
             {
                 const string updateTempAddress = @"
-                    UPDATE HR_Addresses
+                    UPDATE Addresses
                     SET
                         country = @TempAddressCountry,
                         region = @TempAddressRegion,
@@ -271,7 +275,7 @@ public class EmployeeService
             else
             {
                 const string insertTempAddress = @"
-                    INSERT INTO HR_Addresses(country, region, post_code, city, address_1, address_2)
+                    INSERT INTO Addresses(country, region, post_code, city, address_1, address_2)
                     VALUES (@TempAddressCountry, @TempAddressRegion, @TempAddressPostCode, @TempAddressCity, @TempAddressFirstLine, @TempAddressSecondLine);
                     SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -280,7 +284,7 @@ public class EmployeeService
                     var tempAddressResult = await connection.ExecuteScalarAsync<int>(insertTempAddress, dto, transaction);
 
                     const string updateEmployeeTempAddress = @"
-                        UPDATE HR_Employee
+                        UPDATE Employees
                         SET
                             temp_address_id = @TempAddressId
                         WHERE id = @id";
@@ -311,7 +315,7 @@ public class EmployeeService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string deleteEmployee = @"
-            DELETE FROM HR_Employee 
+            DELETE FROM Employees
             WHERE id = @id";
 
         var rowsAffected = await connection.ExecuteAsync(deleteEmployee, new

@@ -20,7 +20,7 @@ public class PerformanceReviewService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string insert = @"
-            INSERT INTO HR_PerformanceReviews (employee_id, review_date, score, comment)
+            INSERT INTO PerformanceReviews (employee_id, review_date, score, comment)
             VALUES (@EmployeeId, @ReviewDate, @Score, @Comment);
             SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -39,8 +39,8 @@ public class PerformanceReviewService
                 e.first_name + ' ' + e.last_name AS EmployeeName,
                 pr.review_date AS ReviewDate,
                 pr.score AS Score
-            FROM HR_PerformanceReviews pr
-            JOIN HR_Employee e ON e.id = pr.employee_id
+            FROM PerformanceReviews pr
+            JOIN Employees e ON e.id = pr.employee_id
             WHERE 1 = 1";
 
         var parameters = new DynamicParameters();
@@ -73,8 +73,8 @@ public class PerformanceReviewService
                 pr.review_date AS ReviewDate,
                 pr.score AS Score,
                 pr.comment AS Comment
-            FROM HR_PerformanceReviews pr
-            JOIN HR_Employee e ON e.id = pr.employee_id
+            FROM PerformanceReviews pr
+            JOIN Employees e ON e.id = pr.employee_id
             WHERE pr.id = @id";
 
         var result = await connection.QueryFirstOrDefaultAsync<PerformanceReviewDto>(query, new
@@ -90,7 +90,7 @@ public class PerformanceReviewService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string delete = @"
-            DELETE FROM HR_PerformanceReviews
+            DELETE FROM PerformanceReviews
             WHERE id = @id";
 
         var rowsAffected = await connection.ExecuteAsync(delete, new

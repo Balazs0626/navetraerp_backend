@@ -20,7 +20,7 @@ public class PositionService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string insert = @"
-            INSERT INTO HR_Positions (position_name, description)
+            INSERT INTO Positions (position_name, description)
             VALUES (@PositionName, @Description);
             SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -38,7 +38,7 @@ public class PositionService
                 id AS Id,
                 position_name AS PositionName,
                 description AS Description
-            FROM HR_Positions";
+            FROM Positions";
 
         var result = await connection.QueryAsync<Position>(query);
 
@@ -53,7 +53,7 @@ public class PositionService
             SELECT
                 position_name AS PositionName,
                 description AS Description
-            FROM HR_Positions
+            FROM Positions
             WHERE id = @id";
 
         var result = await connection.QueryFirstOrDefaultAsync<PositionDto>(query, new
@@ -69,7 +69,7 @@ public class PositionService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string update = @"
-            UPDATE HR_Positions
+            UPDATE Positions
             SET
                 position_name = @PositionName,
                 description = @Description
@@ -90,7 +90,7 @@ public class PositionService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string delete = @"
-            DELETE FROM HR_Positions
+            DELETE FROM Positions
             WHERE id = @id";
 
         var rowsAffected = await connection.ExecuteAsync(delete, new

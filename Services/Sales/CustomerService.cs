@@ -25,14 +25,14 @@ public class CustomerService
         try
         {
             const string insertBillingAddress = @"
-                INSERT INTO HR_Addresses(country, region, post_code, city, address_1, address_2)
+                INSERT INTO Addresses(country, region, post_code, city, address_1, address_2)
                 VALUES (@BillingAddressCountry, @BillingAddressRegion, @BillingAddressPostCode, @BillingAddressCity, @BillingAddressFirstLine, @BillingAddressSecondLine);
                 SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
             var billingAddressResult = await connection.ExecuteScalarAsync<int>(insertBillingAddress, dto, transaction);
 
             const string insertShippingAddress = @"
-                INSERT INTO HR_Addresses(country, region, post_code, city, address_1, address_2)
+                INSERT INTO Addresses(country, region, post_code, city, address_1, address_2)
                 VALUES (@ShippingAddressCountry, @ShippingAddressRegion, @ShippingAddressPostCode, @ShippingAddressCity, @ShippingAddressFirstLine, @ShippingAddressSecondLine);
                 SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -42,6 +42,8 @@ public class CustomerService
                 INSERT INTO Customers (
                     name,
                     tax_number,
+                    eu_tax_number,
+                    bank_account_number,
                     email,
                     phone_number,
                     billing_address_id,
@@ -50,6 +52,8 @@ public class CustomerService
                 VALUES (
                     @Name,
                     @TaxNumber,
+                    @EuTaxNumber,
+                    @BankAccountNumber,
                     @Email,
                     @PhoneNumber,
                     @BillingAddressId,
@@ -101,6 +105,8 @@ public class CustomerService
                 c.id AS Id,
                 c.name AS Name,
                 c.tax_number AS TaxNumber,
+                c.eu_tax_number AS EuTaxNumber,
+                c.bank_account_number AS BankAccountNumber,
                 c.email AS Email,
                 c.phone_number AS PhoneNumber,
                 c.billing_address_id AS BillingAddressId,
@@ -118,8 +124,8 @@ public class CustomerService
                 s.address_1 AS ShippingAddressFirstLine,
                 s.address_2 AS ShippingAddressSecondLine
             FROM Customers c
-            JOIN HR_Addresses a ON a.id = c.billing_address_id
-            LEFT JOIN HR_Addresses s ON s.id = c.shipping_address_id
+            JOIN Addresses a ON a.id = c.billing_address_id
+            LEFT JOIN Addresses s ON s.id = c.shipping_address_id
             WHERE c.id = @id";
 
         var result = await connection.QueryFirstOrDefaultAsync<UpdateCustomerDto>(query, new
@@ -147,6 +153,8 @@ public class CustomerService
                 SET
                     name = @Name,
                     tax_number = @TaxNumber,
+                    eu_tax_number = @EuTaxNumber,
+                    bank_account_number = @BankAccountNumber,
                     email = @Email,
                     phone_number = @PhoneNumber
                 WHERE id = @id";
@@ -157,7 +165,7 @@ public class CustomerService
             rowsAffected = await connection.ExecuteAsync(updateCustomer, parameters, transaction);
 
             const string updateBillingAddress = @"
-                UPDATE HR_Addresses
+                UPDATE Addresses
                 SET
                     country = @BillingAddressCountry,
                     region = @BillingAddressRegion,
@@ -172,7 +180,7 @@ public class CustomerService
             rowsAffected += billingAddressRowsAffected;
 
             const string updateShippingAddress = @"
-                UPDATE HR_Addresses
+                UPDATE Addresses
                 SET
                     country = @ShippingAddressCountry,
                     region = @ShippingAddressRegion,

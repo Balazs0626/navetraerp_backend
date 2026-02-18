@@ -25,7 +25,7 @@ public class WarehouseService
         try
         {
             const string insertAddress = @"
-                INSERT INTO HR_Addresses(country, region, post_code, city, address_1, address_2)
+                INSERT INTO Addresses(country, region, post_code, city, address_1, address_2)
                 VALUES (@AddressCountry, @AddressRegion, @AddressPostCode, @AddressCity, @AddressFirstLine, @AddressSecondLine);
                 SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -72,8 +72,8 @@ public class WarehouseService
                 a.city + ', ' + a.address_1 + ' (' + a.country + ', ' + a.region + ')' AS Address,
                 e.first_name + ' ' + e.last_name AS ManagerName
             FROM Warehouses w
-            JOIN HR_Addresses a ON a.id = w.address_id
-            JOIN HR_Employee e ON e.id = w.manager_employee_id";
+            JOIN Addresses a ON a.id = w.address_id
+            JOIN Employees e ON e.id = w.manager_employee_id";
 
         var result = await connection.QueryAsync<WarehouseListDto>(query);
 
@@ -97,7 +97,7 @@ public class WarehouseService
                 a.address_1 AS AddressFirstLine,
                 a.address_2 AS AddressSecondLine
             FROM Warehouses w
-            JOIN HR_Addresses a ON a.id = w.address_id
+            JOIN Addresses a ON a.id = w.address_id
             WHERE w.id = @id";
 
         var result = await connection.QueryFirstOrDefaultAsync<UpdateWarehouseDto>(query, new
@@ -133,7 +133,7 @@ public class WarehouseService
             rowsAffected = await connection.ExecuteAsync(updateWarehouse, parameters, transaction);
 
             const string updateAddress = @"
-                UPDATE HR_Addresses
+                UPDATE Addresses
                 SET
                     country = @AddressCountry,
                     region = @AddressRegion,

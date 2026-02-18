@@ -14,7 +14,6 @@ public class SupplierService
         _config = config;
     }
 
-    //CreateAsync-be eu_tax_number és bank_account_number
     public async Task<int> CreateAsync(CreateSupplierDto dto)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
@@ -26,7 +25,7 @@ public class SupplierService
         try
         {
             const string insertAddress = @"
-                INSERT INTO HR_Addresses(country, region, post_code, city, address_1, address_2)
+                INSERT INTO Addresses(country, region, post_code, city, address_1, address_2)
                 VALUES (@AddressCountry, @AddressRegion, @AddressPostCode, @AddressCity, @AddressFirstLine, @AddressSecondLine);
                 SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -37,6 +36,8 @@ public class SupplierService
                     name,
                     tax_number,
                     contact_person,
+                    eu_tax_number,
+                    bank_account_number,
                     email,
                     phone_number,
                     address_id
@@ -44,6 +45,8 @@ public class SupplierService
                 VALUES (
                     @Name,
                     @TaxNumber,
+                    @EuTaxNumber,
+                    @BankAccountNumber,
                     @ContactPerson,
                     @Email,
                     @PhoneNumber,
@@ -86,7 +89,6 @@ public class SupplierService
         return result;
     }
 
-    //GetByIdAsync-be eu_tax_number és bank_account_number
     public async Task<UpdateSupplierDto> GetByIdAsync(int id)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
@@ -96,6 +98,8 @@ public class SupplierService
                 s.id AS Id,
                 s.name AS Name,
                 s.tax_number AS TaxNumber,
+                s.eu_tax_number AS EuTaxNumber,
+                s.bank_account_number AS BankAccountNumber,
                 s.contact_person AS ContactPerson,
                 s.email AS Email,
                 s.phone_number AS PhoneNumber,
@@ -107,7 +111,7 @@ public class SupplierService
                 a.address_1 AS AddressFirstLine,
                 a.address_2 AS AddressSecondLine
             FROM Suppliers s
-            JOIN HR_Addresses a ON a.id = s.address_id
+            JOIN Addresses a ON a.id = s.address_id
             WHERE s.id = @id";
 
         var result = await connection.QueryFirstOrDefaultAsync<UpdateSupplierDto>(query, new
@@ -118,7 +122,6 @@ public class SupplierService
         return result;
     }
 
-    //UpdateAsync-be eu_tax_number és bank_account_number
     public async Task<bool> UpdateAsync(int id, UpdateSupplierDto dto)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
@@ -136,6 +139,8 @@ public class SupplierService
                 SET
                     name = @Name,
                     tax_number = @TaxNumber,
+                    eu_tax_number = @EuTaxNumber,
+                    bank_account_number = @BankAccountNumber,
                     contact_person = @ContactPerson,
                     email = @Email,
                     phone_number = @PhoneNumber
@@ -147,7 +152,7 @@ public class SupplierService
             rowsAffected = await connection.ExecuteAsync(updateSupplier, parameters, transaction);
 
             const string updateAddress = @"
-                UPDATE HR_Addresses
+                UPDATE Addresses
                 SET
                     country = @AddressCountry,
                     region = @AddressRegion,

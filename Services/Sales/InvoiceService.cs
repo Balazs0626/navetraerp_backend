@@ -184,7 +184,7 @@ public class InvoiceService
                 FROM Invoices i
                 JOIN SalesOrders so ON so.id = i.sales_order_id
                 JOIN Customers c ON c.id = so.customer_id
-                JOIN HR_Addresses a ON a.id = c.billing_address_id
+                JOIN Addresses a ON a.id = c.billing_address_id
                 CROSS JOIN CompanyData cd
                 WHERE i.id = @id";
 

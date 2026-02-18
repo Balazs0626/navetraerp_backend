@@ -251,8 +251,8 @@ public class GoodsReceiptService
                     e.first_name + ' ' + e.last_name AS ReceivedByName
                 FROM GoodsReceipts gr
                 JOIN Warehouses w ON w.id = gr.warehouse_id
-                JOIN HR_Addresses a ON a.id = w.address_id
-                JOIN HR_Employee e ON e.id = gr.received_by_employee_id
+                JOIN Addresses a ON a.id = w.address_id
+                JOIN Employees e ON e.id = gr.received_by_employee_id
                 WHERE gr.id = @id";
 
             var result = await connection.QueryFirstOrDefaultAsync<GoodsReceiptDto>(goodsReceiptQuery, new

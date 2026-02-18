@@ -20,7 +20,7 @@ public class ShiftService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string insert = @"
-            INSERT INTO HR_Shifts (shift_name, start_time, end_time)
+            INSERT INTO Shifts (shift_name, start_time, end_time)
             VALUES (@ShiftName, @StartTime, @EndTime);
             SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -39,7 +39,7 @@ public class ShiftService
                 shift_name AS ShiftName,
                 start_time AS StartTime,
                 end_time AS EndTime
-            FROM HR_Shifts";
+            FROM Shifts";
 
         var result = await connection.QueryAsync<Shift>(query);
 
@@ -55,7 +55,7 @@ public class ShiftService
                 shift_name AS ShiftName,
                 start_time AS StartTime,
                 end_time AS EndTime
-            FROM HR_Shifts
+            FROM Shifts
             WHERE id = @id";
 
         var result = await connection.QuerySingleOrDefaultAsync<ShiftDto>(query, new
@@ -71,7 +71,7 @@ public class ShiftService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string update = @"
-            UPDATE HR_Shifts
+            UPDATE Shifts
             SET
                 shift_name = @ShiftName,
                 start_time = @StartTime,
@@ -94,7 +94,7 @@ public class ShiftService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string delete = @"
-            DELETE FROM HR_Shifts
+            DELETE FROM Shifts
             WHERE id = @id";
 
         var rowsAffected = await connection.ExecuteAsync(delete, new

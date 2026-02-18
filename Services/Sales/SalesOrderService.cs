@@ -223,8 +223,8 @@ public class SalesOrderService
                     sm.from_warehouse_id AS WarehouseId
                 FROM SalesOrders so
                 JOIN Customers c ON c.id = so.customer_id
-                JOIN HR_Addresses ba ON ba.id = c.billing_address_id
-                JOIN HR_Addresses sa ON sa.id = c.shipping_address_id
+                JOIN Addresses ba ON ba.id = c.billing_address_id
+                JOIN Addresses sa ON sa.id = c.shipping_address_id
                 JOIN StockMovements sm ON sm.reference_document = @ReferenceDocument
                 WHERE so.id = @id";
 

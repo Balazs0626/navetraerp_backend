@@ -88,7 +88,7 @@ public class InventoryCountService
                 ic.count_date AS CountDate
             FROM InventoryCounts ic
             JOIN Warehouses w ON w.id = ic.warehouse_id
-            JOIN HR_Employee e ON e.id = ic.counted_by_id
+            JOIN Employees e ON e.id = ic.counted_by_id
             WHERE 1 = 1";
 
         var parameters = new DynamicParameters();
@@ -118,7 +118,7 @@ public class InventoryCountService
                     e.first_name + ' ' + e.last_name AS CountedByName
                 FROM InventoryCounts ic
                 JOIN Warehouses w ON w.id = ic.warehouse_id
-                JOIN HR_Employee e ON e.id = ic.counted_by_id
+                JOIN Employees e ON e.id = ic.counted_by_id
                 WHERE ic.id = @id";
 
             var result = await connection.QueryFirstOrDefaultAsync<InventoryCountDto>(inventoryCountQuery, new

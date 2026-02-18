@@ -19,7 +19,7 @@ public class LeaveRequestService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string insert = @"
-            INSERT INTO HR_LeaveRequests (employee_id, start_data, end_date, leave_type, status)
+            INSERT INTO LeaveRequests (employee_id, start_date, end_date, leave_type, status)
             VALUES (@EmployeeId, @StartDate, @EndDate, @LeaveType, @Status);
             SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -37,11 +37,11 @@ public class LeaveRequestService
                 lr.id AS Id,
                 e.first_name + ' ' + e.last_name AS EmployeeName,
                 lr.leave_type AS LeaveType,
-                lr.start_data AS StartDate,
+                lr.start_date AS StartDate,
                 lr.end_date AS EndDate,
                 lr.status AS Status
-            FROM HR_LeaveRequests lr
-            JOIN HR_Employee e ON e.id = lr.employee_id
+            FROM LeaveRequests lr
+            JOIN Employees e ON e.id = lr.employee_id
             WHERE 1 = 1";
 
         var parameters = new DynamicParameters();
@@ -78,7 +78,7 @@ public class LeaveRequestService
         foreach (var id in dto.Ids)
         {
             const string update = @"
-                UPDATE HR_LeaveRequests
+                UPDATE LeaveRequests
                 SET
                     status = 'approved'
                 WHERE id = @id";
@@ -101,7 +101,7 @@ public class LeaveRequestService
         foreach (var id in dto.Ids)
         {
             const string update = @"
-                UPDATE HR_LeaveRequests
+                UPDATE LeaveRequests
                 SET
                     status = 'rejected'
                 WHERE id = @id";
@@ -120,7 +120,7 @@ public class LeaveRequestService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string delete = @"
-            DELETE FROM HR_LeaveRequests
+            DELETE FROM LeaveRequests
             WHERE id = @id";
 
         var rowsAffected = await connection.ExecuteAsync(delete, new

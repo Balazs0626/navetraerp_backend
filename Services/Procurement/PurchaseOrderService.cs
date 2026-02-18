@@ -31,16 +31,14 @@ public class PurchaseOrderService
                     order_date,
                     expected_delivery_date,
                     status,
-                    total_amount,
-                    currency
+                    total_amount
                 )
                 VALUES (
                     @SupplierId,
                     @OrderDate,
                     @ExpectedDeliveryDate,
                     @Status,
-                    @TotalAmount,
-                    @Currency
+                    @TotalAmount
                 );
                 SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -181,11 +179,10 @@ public class PurchaseOrderService
                     po.order_date AS OrderDate,
                     po.expected_delivery_date AS ExpectedDeliveryDate,
                     po.status AS Status,
-                    po.total_amount AS TotalAmount,
-                    po.currency AS Currency
+                    po.total_amount AS TotalAmount
                 FROM PurchaseOrders po
                 JOIN Suppliers s ON s.id = po.supplier_id
-                JOIN HR_Addresses a ON a.id = s.address_id
+                JOIN Addresses a ON a.id = s.address_id
                 CROSS JOIN CompanyData cd
                 WHERE po.id = @id";
 
@@ -251,8 +248,7 @@ public class PurchaseOrderService
                     order_date = @OrderDate,
                     expected_delivery_date = @ExpectedDeliveryDate,
                     status = @Status,
-                    total_amount = @TotalAmount,
-                    currency = @Currency
+                    total_amount = @TotalAmount
                 WHERE id = @id";
 
             var parameters = new DynamicParameters(dto);

@@ -18,6 +18,8 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
+
+
 //User, role, authentication
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<RoleService>();
@@ -51,6 +53,10 @@ builder.Services.AddScoped<InventoryItemService>();
 builder.Services.AddScoped<InventoryCountService>();
 
 builder.Services.AddScoped<CompanyDataService>();
+
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
 // JWT
 var jwtCfg = builder.Configuration.GetSection("Jwt");

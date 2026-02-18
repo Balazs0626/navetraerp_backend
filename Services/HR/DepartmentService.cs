@@ -19,7 +19,7 @@ public class DepartmentService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string insert = @"
-            INSERT INTO HR_Departments (department_name, description)
+            INSERT INTO Departments (department_name, description)
             VALUES (@DepartmentName, @Description);
             SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -37,7 +37,7 @@ public class DepartmentService
                 id AS Id,
                 department_name AS DepartmentName,
                 description AS Description
-            FROM HR_Departments";
+            FROM Departments";
 
         var result = await connection.QueryAsync<DepartmentListDto>(query);
 
@@ -52,7 +52,7 @@ public class DepartmentService
             SELECT
                 department_name AS DepartmentName,
                 description AS Description
-            FROM HR_Departments
+            FROM Departments
             WHERE id = @id";
 
         var result = await connection.QueryFirstOrDefaultAsync<DepartmentDto>(query, new
@@ -68,7 +68,7 @@ public class DepartmentService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string update = @"
-            UPDATE HR_Departments
+            UPDATE Departments
             SET 
                 department_name = @DepartmentName,
                 description = @Description
@@ -89,7 +89,7 @@ public class DepartmentService
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
         const string delete = @"
-            DELETE FROM HR_Departments
+            DELETE FROM Departments
             WHERE id = @id";
 
         var rowsAffected = await connection.ExecuteAsync(delete, new
