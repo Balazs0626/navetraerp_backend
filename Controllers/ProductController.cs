@@ -23,8 +23,7 @@ public class ProductController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateProductDto dto)
     {
 
-        if (!User.HasClaim("permission", "CREATE:PRODUCTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "CREATE:PRODUCTS")) return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
@@ -36,13 +35,11 @@ public class ProductController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string? sku, [FromQuery] string? name, [FromQuery] bool? active)
     {
 
-        if (!User.HasClaim("permission", "VIEW:PRODUCTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:PRODUCTS")) return Forbid();
 
         var result = await _service.GetAllAsync(sku, name, active);
 
-        if (result == null)
-            NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
@@ -52,13 +49,11 @@ public class ProductController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
 
-        if (!User.HasClaim("permission", "VIEW:PRODUCTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:PRODUCTS")) return Forbid();
 
         var result = await _service.GetByIdAsync(id);
 
-        if (result == null)
-            NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
@@ -68,13 +63,11 @@ public class ProductController : ControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] ProductDto dto)
     {
 
-        if (!User.HasClaim("permission", "EDIT:PRODUCTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "EDIT:PRODUCTS")) return Forbid();
 
         var result = await _service.UpdateAsync(id, dto);
 
-        if (!result)
-            NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }
@@ -84,13 +77,11 @@ public class ProductController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
 
-        if (!User.HasClaim("permission", "DELETE:PRODUCTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "DELETE:PRODUCTS")) return Forbid();
 
         var result = await _service.DeleteAsync(id);
 
-        if (!result)
-            NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }

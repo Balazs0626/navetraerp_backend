@@ -23,8 +23,7 @@ public class PerformanceReviewController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreatePerformanceReviewDto dto)
     {
 
-        if (!User.HasClaim("permission", "CREATE:PERFORMANCE_REVIEWS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "CREATE:PERFORMANCE_REVIEWS")) return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
@@ -36,13 +35,11 @@ public class PerformanceReviewController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string? employeeName, [FromQuery] DateTime? date)
     {
 
-        if (!User.HasClaim("permission", "VIEW:PERFORMANCE_REVIEWS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:PERFORMANCE_REVIEWS")) return Forbid();
 
         var result = await _service.GetAllAsync(employeeName, date);
 
-        if (result == null)
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
@@ -52,13 +49,11 @@ public class PerformanceReviewController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
 
-        if (!User.HasClaim("permission", "VIEW:PERFORMANCE_REVIEWS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:PERFORMANCE_REVIEWS")) return Forbid();
 
         var result = await _service.GetByIdAsync(id);
 
-        if (result == null)
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
@@ -68,13 +63,11 @@ public class PerformanceReviewController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
 
-        if (!User.HasClaim("permission", "DELETE:PERFORMANCE_REVIEWS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "DELETE:PERFORMANCE_REVIEWS")) return Forbid();
 
         var result = await _service.DeleteAsync(id);
 
-        if (!result) 
-            return NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }

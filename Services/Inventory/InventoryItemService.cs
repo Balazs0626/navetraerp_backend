@@ -33,7 +33,6 @@ public class InventoryItemService
                     warehouse_id,
                     product_id,
                     quantity_on_hand,
-                    reorder_level,
                     batch_number,
                     last_updated
                 )
@@ -41,7 +40,6 @@ public class InventoryItemService
                     @WarehouseId,
                     @ProductId,
                     @QuantityOnHand,
-                    0,
                     @BatchNumber,
                     GETDATE()
                 );

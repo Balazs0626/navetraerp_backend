@@ -22,8 +22,7 @@ public class WorkScheduleController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateWorkScheduleDto dto)
     {
 
-        if (!User.HasClaim("permission", "CREATE:WORK_SCHEDULES"))
-            return Forbid();
+        if (!User.HasClaim("permission", "CREATE:WORK_SCHEDULES")) return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
@@ -35,12 +34,11 @@ public class WorkScheduleController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string? name, [FromQuery] DateTime? date)
     {
 
-        if (!User.HasClaim("permission", "VIEW:WORK_SCHEDULES"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:WORK_SCHEDULES")) return Forbid();
 
         var result = await _service.GetAllAsync(name, date);
 
-        if (result == null) NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
@@ -50,12 +48,11 @@ public class WorkScheduleController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
 
-        if (!User.HasClaim("permission", "DELETE:WORK_SCHEDULES"))
-            return Forbid();
+        if (!User.HasClaim("permission", "DELETE:WORK_SCHEDULES")) return Forbid();
 
         var result = await _service.DeleteAsync(id);
 
-        if (!result) NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }

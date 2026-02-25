@@ -21,60 +21,84 @@ public class RoleController : ControllerBase
         _permissionService = permissionService;
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] RoleDto dto)
     {
+
+        if (!User.HasClaim("permission", "EDIT:ROLES")) return Forbid();
+
         var result = await _roleService.CreateAsync(dto);
 
         return Ok(result);
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
+
+        if (!User.HasClaim("permission", "VIEW:ROLES")) return Forbid();
+
         var results = await _roleService.GetAllAsync();
 
-        if (results == null) NotFound();
+        if (results == null) return NotFound();
 
         return Ok(results);
     }
 
+    [Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
+
+        if (!User.HasClaim("permission", "VIEW:ROLES")) return Forbid();
+
         var result = await _roleService.GetByIdAsync(id);
 
-        if (result == null) NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
 
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, RoleDto dto)
     {
+
+        if (!User.HasClaim("permission", "EDIT:ROLES")) return Forbid();
+
         var result = await _roleService.UpdateAsync(id, dto);
 
-        if (!result) NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }
 
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
+
+        if (!User.HasClaim("permission", "DELETE:ROLES")) return Forbid();
+
         var result = await _roleService.DeleteAsync(id);
 
-        if (!result) NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }
 
+    [Authorize]
     [HttpGet("all-permissions")]
     public async Task<IActionResult> GetAllPermissions()
     {
+
+        if (!User.HasClaim("permission", "EDIT:ROLES")) return Forbid();
+
         var results = await _permissionService.GetAllAsync();
 
-        if (results == null) NotFound();
+        if (results == null) return NotFound();
 
         return Ok(results);
     }

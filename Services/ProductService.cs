@@ -78,6 +78,7 @@ public class ProductService
                 p.sku AS Sku,
                 p.name AS Name,
                 p.unit AS Unit,
+                p.price_per_unit AS PricePerUnit,
                 p.active AS Active,
                 (
                     SELECT COUNT(*)

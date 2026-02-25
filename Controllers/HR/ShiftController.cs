@@ -23,8 +23,7 @@ public class ShiftController : ControllerBase
     public async Task<IActionResult> Create([FromBody] ShiftDto dto)
     {
 
-        if (!User.HasClaim("permission", "CREATE:SHIFTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "CREATE:SHIFTS")) return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
@@ -36,12 +35,11 @@ public class ShiftController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
 
-        if (!User.HasClaim("permission", "VIEW:SHIFTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:SHIFTS")) return Forbid();
 
         var result = await _service.GetAllAsync();
 
-        if (result == null) NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
@@ -51,12 +49,11 @@ public class ShiftController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
 
-        if (!User.HasClaim("permission", "VIEW:SHIFTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:SHIFTS")) return Forbid();
 
         var result = await _service.GetByIdAsync(id);
 
-        if (result == null) NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
@@ -66,12 +63,11 @@ public class ShiftController : ControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] ShiftDto dto)
     {
 
-        if (!User.HasClaim("permission", "EDIT:SHIFTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "EDIT:SHIFTS")) return Forbid();
 
         var result = await _service.UpdateAsync(id, dto);
 
-        if (!result) NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }
@@ -81,12 +77,11 @@ public class ShiftController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
 
-        if (!User.HasClaim("permission", "DELETE:SHIFTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "DELETE:SHIFTS")) return Forbid();
 
         var result = await _service.DeleteAsync(id);
 
-        if (!result) NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }

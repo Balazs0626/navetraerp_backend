@@ -8,6 +8,7 @@ public class PurchaseOrderDto
     public string SupplierName { get; set;} = String.Empty;
     public string SupplierTaxNumber { get; set; } = String.Empty;
     public string SupplierEuTaxNumber { get; set; } = String.Empty;
+    public string SupplierBankAccountNumber { get; set; } = String.Empty;
     public string SupplierAddressCountry { get; set; } = String.Empty;
     public string SupplierAddressRegion { get; set; } = String.Empty;
     public string SupplierAddressPostCode { get; set; } = String.Empty;
@@ -17,6 +18,7 @@ public class PurchaseOrderDto
     public string CompanyName { get; set; } = String.Empty;
     public string CompanyTaxNumber { get; set; } = String.Empty;
     public string CompanyEuTaxNumber { get; set; } = String.Empty;
+    public string CompanyBankAccountNumber { get; set; } = String.Empty;
     public string CompanyAddress_1 { get; set; } = String.Empty;
     public string? CompanyAddress_2 { get; set; } = null;
     public DateTime OrderDate { get; set; }

@@ -6,6 +6,7 @@ public class ProductListDto
     public string Sku { get; set; } = String.Empty;
     public string Name { get; set; } = String.Empty;
     public string Unit { get; set; } = String.Empty;
+    public decimal PricePerUnit { get; set; }
     public bool Active { get; set; }
     public int ComponentCount { get; set; }
 }

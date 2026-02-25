@@ -98,7 +98,6 @@ public class StockMovementService
                             product_id, 
                             warehouse_id, 
                             quantity_on_hand,
-                            reorder_level,
                             batch_number,
                             last_updated
                         )
@@ -106,7 +105,6 @@ public class StockMovementService
                             @ProductId, 
                             @WarehouseId, 
                             @QuantityOnHand,
-                            0,
                             @BatchNumber,
                             GETDATE()
                         )

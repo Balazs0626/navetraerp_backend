@@ -6,35 +6,35 @@ using NavetraERP.Services;
 namespace NavetraERP.Controllers;
 
 [ApiController]
-[Route("api/suppliers")]
-public class SupplierController : ControllerBase
+[Route("api/machines")]
+public class MachineController : ControllerBase
 {
 
-    private readonly SupplierService _service;
+    private readonly MachineService _service;
 
-    public SupplierController(SupplierService service)
+    public MachineController(MachineService service)
     {
         _service = service;
     }
 
-    [Authorize]
+    //[Authorize]
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateSupplierDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateMachineDto dto)
     {
 
-        if (!User.HasClaim("permission", "CREATE:SUPPLIERS")) return Forbid();
+        //if (!User.HasClaim("permission", "CREATE:MACHINES")) return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
         return Ok(result);
     }
 
-    [Authorize]
+    //[Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
 
-        if (!User.HasClaim("permission", "VIEW:SUPPLIERS")) return Forbid();
+        //if (!User.HasClaim("permission", "VIEW:MACHINES"))  return Forbid();
 
         var result = await _service.GetAllAsync();
 
@@ -43,12 +43,12 @@ public class SupplierController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize]
+    //[Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
 
-        if (!User.HasClaim("permission", "VIEW:SUPPLIERS")) return Forbid();
+        //if (!User.HasClaim("permission", "VIEW:MACHINES")) return Forbid();
 
         var result = await _service.GetByIdAsync(id);
 
@@ -57,12 +57,12 @@ public class SupplierController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize]
+    //[Authorize]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateSupplierDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] MachineDto dto)
     {
 
-        if (!User.HasClaim("permission", "EDIT:SUPPLIERS")) return Forbid();
+        //if (!User.HasClaim("permission", "EDIT:MACHINES")) return Forbid();
 
         var result = await _service.UpdateAsync(id, dto);
 
@@ -71,12 +71,12 @@ public class SupplierController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize]
+    //[Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
 
-        if (!User.HasClaim("permission", "DELETE:SUPPLIERS")) return Forbid();
+        //if (!User.HasClaim("permission", "DELETE:MACHINES")) return Forbid();
 
         var result = await _service.DeleteAsync(id);
 

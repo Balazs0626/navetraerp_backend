@@ -115,6 +115,31 @@ public class ProductionOrderService
                 }, transaction);
             }
 
+            foreach (var machine in dto.Machines)
+            {
+                const string insertProductionOrderMachine = @"
+                    INSERT INTO ProductionOrderMachines (
+                        production_order_id,
+                        machine_id,
+                        start_date,
+                        end_date
+                    )
+                    VALUES (
+                        @ProductionOrderId,
+                        @MachineId,
+                        @StartDate,
+                        @EndDate
+                    )";
+
+                var itemResult = await connection.ExecuteScalarAsync<int>(insertProductionOrderMachine, new
+                {
+                    ProductionOrderId = result,
+                    machine.MachineId,
+                    machine.StartDate,
+                    machine.EndDate
+                }, transaction);
+            }
+
             transaction.Commit();
 
             return result;
@@ -254,6 +279,26 @@ public class ProductionOrderService
             }, transaction)).ToList();
 
             result.Components = components;
+
+            const string productionOrderMachinesQuery = @"
+                SELECT
+                    poc.id AS Id,
+                    poc.production_order_id AS ProductionOrderId,
+                    poc.machine_id AS MachineId,
+                    m.name AS MachineName,
+                    m.code AS MachineCode,
+                    poc.start_date AS StartDate,
+                    poc.end_date AS EndDate
+                FROM ProductionOrderMachines poc
+                JOIN Machines m ON m.id = poc.machine_id
+                WHERE poc.production_order_id = @id";
+
+            var machines = (await connection.QueryAsync<ProductionOrderMachineDto>(productionOrderMachinesQuery, new
+            {
+                id
+            }, transaction)).ToList();
+
+            result.Machines = machines;
 
             transaction.Commit();
 
@@ -464,6 +509,39 @@ public class ProductionOrderService
                 }
             }
 
+            if (dto.Machines != null)
+            {
+
+                var deleteProductionOrderMachineQuery = "DELETE FROM ProductionOrderMachines WHERE production_order_id = @id";
+                await connection.ExecuteAsync(deleteProductionOrderMachineQuery, new { id }, transaction);
+
+                foreach (var machine in dto.Machines)
+                {
+                    const string insertProductionOrderMachine = @"
+                        INSERT INTO ProductionOrderMachines (
+                            production_order_id,
+                            machine_id,
+                            start_date,
+                            end_date
+                        )
+                        VALUES (
+                            @ProductionOrderId,
+                            @MachineId,
+                            @StartDate,
+                            @EndDate
+                        )";
+
+                    var itemResult = await connection.ExecuteScalarAsync<int>(insertProductionOrderMachine, new
+                    {
+                        ProductionOrderId = id,
+                        machine.MachineId,
+                        machine.StartDate,
+                        machine.EndDate
+                    }, transaction);
+
+                }
+            }
+
             transaction.Commit();
             return rowsAffected > 0;
         }
@@ -534,10 +612,6 @@ public class ProductionOrderService
 
             var items = await connection.QueryAsync<ProductionConsumptionDto>(getItemsQuery, new { id }, transaction);
 
-            // ---------------------------------------------------------
-            // 3. LÉPÉS: Készlet visszatöltése (Kompenzálás)
-            // ---------------------------------------------------------
-            // Csak akkor, ha volt mozgás és van mit visszatölteni
             if (items.Any())
             {
                 const string restoreInventoryItem = @"
@@ -558,28 +632,24 @@ public class ProductionOrderService
                 }
             }
 
-            // ---------------------------------------------------------
-            // 4. LÉPÉS: Készletmozgás napló törlése
-            // ---------------------------------------------------------
-            // Ha nem törlöd ki, ott maradnak "árva" rekordok, amik egy nem létező rendelésre hivatkoznak.
             const string deleteStockMovements = @"
                 DELETE FROM StockMovements 
                 WHERE reference_document = @ReferenceDocument";
 
             await connection.ExecuteAsync(deleteStockMovements, new { ReferenceDocument = referenceDocument }, transaction);
 
-            // ---------------------------------------------------------
-            // 5. LÉPÉS: Rendelés tételek törlése
-            // ---------------------------------------------------------
             const string deleteProductionConsumption = @"
                 DELETE FROM ProductionConsumptions 
                 WHERE production_order_id = @id";
 
             await connection.ExecuteAsync(deleteProductionConsumption, new { id }, transaction);
 
-            // ---------------------------------------------------------
-            // 6. LÉPÉS: Rendelés fejléc törlése
-            // ---------------------------------------------------------
+            const string deleteProductionOrderMachine = @"
+                DELETE FROM ProductionOrderMachines 
+                WHERE production_order_id = @id";
+
+            await connection.ExecuteAsync(deleteProductionOrderMachine, new { id }, transaction);
+
             const string deleteProductionOrder = @"
                 DELETE FROM ProductionOrders 
                 WHERE id = @id";

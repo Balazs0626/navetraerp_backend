@@ -164,7 +164,8 @@ public class PurchaseOrderService
                     po.supplier_id AS SupplierId,
                     s.name AS SupplierName,
                     s.tax_number AS SupplierTaxNumber,
-                    'eutax' AS SupplierEuTaxNumber,
+                    s.eu_tax_number AS SupplierEuTaxNumber,
+                    s.bank_account_number AS SupplierBankAccountNumber,
                     a.country AS SupplierAddressCountry,
                     a.region AS SupplierAddressRegion,
                     a.post_code AS SupplierAddressPostCode,
@@ -174,6 +175,7 @@ public class PurchaseOrderService
                     cd.name AS CompanyName,
                     cd.tax_number AS CompanyTaxNumber,
                     cd.eu_tax_number AS CompanyEuTaxNumber,
+                    cd.bank_account_number AS CompanyBankAccountNumber,
                     cd.billing_country + ', ' + cd.billing_region AS CompanyAddress_1,
                     cd.billing_post_code + ' ' + cd.billing_city + ', ' + cd.billing_address_1 + ' ' + ISNULL(cd.billing_address_2, '') AS CompanyAddress_2,
                     po.order_date AS OrderDate,
@@ -202,7 +204,8 @@ public class PurchaseOrderService
                     ((poi.price_per_unit * (1 - (poi.discount / 100))) * poi.quantity_ordered) * (1 - (poi.tax_rate / 100)) AS NettoPrice,
                     ((poi.price_per_unit * (1 - (poi.discount / 100))) * poi.quantity_ordered) AS BruttoPrice,
                     p.sku AS ProductSku,
-                    p.name AS ProductName
+                    p.name AS ProductName,
+                    p.unit AS ProductUnit
                 FROM PurchaseOrderItems poi
                 JOIN Products p ON p.id = poi.product_id
                 WHERE purchase_order_id = @id";

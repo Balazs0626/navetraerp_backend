@@ -23,8 +23,7 @@ public class LeaveRequestController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateLeaveRequestDto dto)
     {
 
-        if (!User.HasClaim("permission", "CREATE:LEAVE_REQUESTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "CREATE:LEAVE_REQUESTS")) return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
@@ -36,13 +35,11 @@ public class LeaveRequestController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string? employeeName, [FromQuery] string? leaveType, [FromQuery] string? status)
     {
 
-        if (!User.HasClaim("permission", "VIEW:LEAVE_REQUESTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:LEAVE_REQUESTS")) return Forbid();
 
         var result = await _service.GetAllAsync(employeeName, leaveType, status);
 
-        if (result == null) 
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
@@ -52,13 +49,11 @@ public class LeaveRequestController : ControllerBase
     public async Task<IActionResult> Approve([FromBody] LeaveRequestDto dto)
     {
 
-        if (!User.HasClaim("permission", "EDIT:LEAVE_REQUESTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "EDIT:LEAVE_REQUESTS")) return Forbid();
 
         var result = await _service.ApproveAsync(dto);
 
-        if (!result) 
-            return NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }
@@ -67,13 +62,11 @@ public class LeaveRequestController : ControllerBase
     public async Task<IActionResult> Reject([FromBody] LeaveRequestDto dto)
     {
 
-        if (!User.HasClaim("permission", "EDIT:LEAVE_REQUESTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "EDIT:LEAVE_REQUESTS")) return Forbid();
 
         var result = await _service.RejectAsync(dto);
 
-        if (!result) 
-            return NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }

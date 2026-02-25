@@ -17,26 +17,26 @@ public class ProductionOutputController : ControllerBase
         _service = service;
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateProductionOutputDto dto)
     {
 
-/*         if (!User.HasClaim("permission", "CREATE:PRODUCTION_OUTPUT"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "CREATE:PRODUCTION_OUTPUTS"))
+            return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
 
-/*         if (!User.HasClaim("permission", "VIEW:PRODUCTION_OUTPUT"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "VIEW:PRODUCTION_OUTPUTS"))
+            return Forbid();
 
         var result = await _service.GetAllAsync();
 
@@ -46,13 +46,13 @@ public class ProductionOutputController : ControllerBase
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
 
-/*         if (!User.HasClaim("permission", "VIEW:PRODUCTION_OUTPUT"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "VIEW:PRODUCTION_OUTPUTS"))
+            return Forbid();
 
         var result = await _service.GetByIdAsync(id);
 
@@ -62,13 +62,13 @@ public class ProductionOutputController : ControllerBase
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] ProductionOutputDto dto)
     {
 
-/*         if (!User.HasClaim("permission", "UPDATE:PRODUCTION_OUTPUT"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "EDIT:PRODUCTION_OUTPUTS"))
+            return Forbid();
 
         var result = await _service.UpdateAsync(id, dto);
 
@@ -78,13 +78,13 @@ public class ProductionOutputController : ControllerBase
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
 
-/*         if (!User.HasClaim("permission", "DELETE:PRODUCTION_OUTPUT"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "DELETE:PRODUCTION_OUTPUTS"))
+            return Forbid();
 
         var result = await _service.DeleteAsync(id);
 

@@ -177,8 +177,8 @@ public class InvoiceService
                     cd.billing_post_code + ' ' + cd.billing_city + ', ' + cd.billing_address_1 + ' ' + ISNULL(cd.billing_address_2, '') AS SellerAddress_2,
                     c.name AS CustomerName,
                     c.tax_number AS CustomerTaxNumber,
-                    'eutax' AS CustomerEuTaxNumber,
-                    'bankacc' AS CustomerBankAccountNumber,
+                    c.eu_tax_number AS CustomerEuTaxNumber,
+                    c.bank_account_number AS CustomerBankAccountNumber,
                     a.country + ', ' + a.region AS CustomerAddress_1,
                     a.post_code + ' ' + a.city + ', ' + a.address_1 + ' ' + ISNULL(a.address_2, '') AS CustomerAddress_2
                 FROM Invoices i

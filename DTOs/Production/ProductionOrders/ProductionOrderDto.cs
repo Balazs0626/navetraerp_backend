@@ -14,4 +14,5 @@ public class ProductionOrderDto
     public int ResponsibleEmployeeId { get; set; }
     public string ResponsibleEmployeeName { get; set; } = String.Empty;
     public List<ProductionConsumptionDto> Components { get; set; } = new List<ProductionConsumptionDto>();
+    public List<ProductionOrderMachineDto> Machines { get; set; } = new List<ProductionOrderMachineDto>();
 }

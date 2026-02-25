@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.SignalR;
+
 namespace NavetraERP.DTOs;
 
 public class PurchaseOrderItemDto
@@ -12,4 +14,5 @@ public class PurchaseOrderItemDto
     public decimal BruttoPrice { get; set; }
     public string ProductSku { get; set; } = String.Empty;
     public string ProductName { get; set; } = String.Empty;
+    public string ProductUnit { get; set; } = String.Empty;
 }

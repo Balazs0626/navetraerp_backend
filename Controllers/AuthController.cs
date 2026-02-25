@@ -27,7 +27,7 @@ public class AuthController : ControllerBase
         _email = email;
     }
 
-    [HttpPost("register")]
+/*     [HttpPost("register")]
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> Register(RegisterRequest req)
     {
@@ -39,7 +39,7 @@ public class AuthController : ControllerBase
         var perms = await _roles.GetPermissionsForRoleAsync(req.RoleId);
 
         return Ok(_jwt.CreateToken(user, role, perms));
-    }
+    } */
 
     [HttpPost("login")]
     [AllowAnonymous]
@@ -97,11 +97,10 @@ public class AuthController : ControllerBase
     {
         var user = await _users.GetByEmailAsync(req.Email);
         
-        // Biztonság: Ha nincs user, akkor is OK-t adunk, hogy ne lehessen e-mail címeket halászni
         if (user == null) return Ok(new { message = "Ha a cím létezik, a kiküldtük a tájékoztatót." });
 
         var token = Guid.NewGuid().ToString();
-        // 15 perces lejárati idő
+
         await _users.SaveResetTokenAsync(user.Id, token, DateTime.UtcNow.AddMinutes(15));
 
         var subject = "Jelszó visszaállítás - NavetraERP";

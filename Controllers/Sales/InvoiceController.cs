@@ -17,79 +17,70 @@ public class InvoiceController : ControllerBase
         _service = service;
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateInvoiceDto dto)
     {
 
-        /* if (!User.HasClaim("permission", "CREATE:PURCHASE_ORDERS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "CREATE:INVOICES")) return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? receiptNumber, [FromQuery] DateTime? invoiceDate, [FromQuery] string? status)
     {
 
-        /* if (!User.HasClaim("permission", "VIEW:PURCHASE_ORDERS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "VIEW:INVOICES")) return Forbid();
 
         var result = await _service.GetAllAsync(receiptNumber, invoiceDate, status);
 
-        if (result == null)
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
 
-        /* if (!User.HasClaim("permission", "VIEW:PURCHASE_ORDERS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "VIEW:INVOICES")) return Forbid();
 
         var result = await _service.GetByIdAsync(id);
 
-        if (result == null)
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] InvoiceDto dto)
     {
 
-        /* if (!User.HasClaim("permission", "DELETE:PURCHASE_ORDERS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "EDIT:INVOICES")) return Forbid();
 
         var result = await _service.UpdateAsync(id, dto);
 
-        if (!result)
-            return NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
 
-        /* if (!User.HasClaim("permission", "DELETE:PURCHASE_ORDERS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "DELETE:INVOICES")) return Forbid();
 
         var result = await _service.DeleteAsync(id);
 
-        if (!result)
-            return NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }

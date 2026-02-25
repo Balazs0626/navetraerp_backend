@@ -17,47 +17,42 @@ public class InventoryItemController : ControllerBase
         _service = service;
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateInventoryItemDto dto)
     {
 
-/*         if (!User.HasClaim("permission", "CREATE:INVENTORY_ITEMS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "CREATE:INVENTORY_ITEMS")) return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] int? warehouseId, [FromQuery] int? productId, [FromQuery] string? batchNumber)
     {
 
-/*         if (!User.HasClaim("permission", "VIEW:INVENTORY_ITEMS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "VIEW:INVENTORY_ITEMS")) return Forbid();
 
         var result = await _service.GetAllAsync(warehouseId, productId, batchNumber);
 
-        if (result == null)
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
 
-/*         if (!User.HasClaim("permission", "DELETE:INVENTORY_ITEMS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "DELETE:INVENTORY_ITEMS")) return Forbid();
 
         var result = await _service.DeleteAsync(id);
 
-        if (!result)
-            NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }

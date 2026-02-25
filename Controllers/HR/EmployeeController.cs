@@ -24,8 +24,7 @@ public class EmployeeController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateEmployeeDto dto)
     {
 
-        if (!User.HasClaim("permission", "CREATE:EMPLOYEES"))
-            return Forbid();
+        if (!User.HasClaim("permission", "CREATE:EMPLOYEES")) return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
@@ -37,13 +36,11 @@ public class EmployeeController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string? fullName, [FromQuery] int? departmentId, [FromQuery] int? positionId)
     {
 
-        if (!User.HasClaim("permission", "VIEW:EMPLOYEES"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:EMPLOYEES")) return Forbid();
 
         var result = await _service.GetAllAsync(fullName, departmentId, positionId);
 
-        if (result == null) 
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
@@ -53,13 +50,11 @@ public class EmployeeController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
 
-        if (!User.HasClaim("permission", "VIEW:EMPLOYEES"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:EMPLOYEES")) return Forbid();
 
         var result = await _service.GetByIdAsync(id);
 
-        if (result == null) 
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
@@ -69,13 +64,11 @@ public class EmployeeController : ControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] EmployeeDto dto)
     {
 
-        if (!User.HasClaim("permission", "EDIT:EMPLOYEES"))
-            return Forbid();
+        if (!User.HasClaim("permission", "EDIT:EMPLOYEES")) return Forbid();
 
         var result = await _service.UpdateAsync(id, dto);
 
-        if (!result) 
-            return NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }

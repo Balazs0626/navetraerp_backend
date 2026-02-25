@@ -110,7 +110,6 @@ public class GoodsReceiptService
                             product_id, 
                             warehouse_id, 
                             quantity_on_hand,
-                            reorder_level,
                             batch_number,
                             last_updated
                         )
@@ -118,7 +117,6 @@ public class GoodsReceiptService
                             @ProductId, 
                             @WarehouseId, 
                             @QuantityOnHand,
-                            0,
                             @BatchNumber,
                             GETDATE()
                         )

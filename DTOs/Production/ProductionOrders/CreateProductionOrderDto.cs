@@ -10,4 +10,5 @@ public class CreateProductionOrderDto
     public int ResponsibleEmployeeId { get; set; }
     public int FromWarehouseId { get; set; }
     public List<ProductionConsumptionDto> Components { get; set; } = new List<ProductionConsumptionDto>();
+    public List<ProductionOrderMachineDto> Machines { get; set; } = new List<ProductionOrderMachineDto>();
 }

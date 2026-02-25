@@ -22,8 +22,7 @@ public class GoodsReceiptController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateGoodsReceiptDto dto)
     {
 
-        if (!User.HasClaim("permission", "CREATE:GOODS_RECEIPTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "CREATE:GOODS_RECEIPTS"))return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
@@ -35,13 +34,11 @@ public class GoodsReceiptController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string? receiptNumber, [FromQuery] string? purchaseOrderReceiptNumber, [FromQuery] int? warehouseId, [FromQuery] DateTime? date)
     {
 
-        if (!User.HasClaim("permission", "VIEW:GOODS_RECEIPTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:GOODS_RECEIPTS")) return Forbid();
 
         var result = await _service.GetAllAsync(receiptNumber, purchaseOrderReceiptNumber, warehouseId, date);
 
-        if (result == null)
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
@@ -51,13 +48,11 @@ public class GoodsReceiptController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
 
-        if (!User.HasClaim("permission", "VIEW:GOODS_RECEIPTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:GOODS_RECEIPTS")) return Forbid();
 
         var result = await _service.GetByIdAsync(id);
 
-        if (result == null)
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
@@ -67,13 +62,11 @@ public class GoodsReceiptController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
 
-        if (!User.HasClaim("permission", "DELETE:GOODS_RECEIPTS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "DELETE:GOODS_RECEIPTS")) return Forbid();
 
         var result = await _service.DeleteAsync(id);
 
-        if (!result)
-            NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }

@@ -16,9 +16,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddControllers();
-
-
 
 //User, role, authentication
 builder.Services.AddScoped<UserService>();
@@ -47,6 +47,7 @@ builder.Services.AddScoped<InvoiceService>();
 
 builder.Services.AddScoped<ProductionOrderService>();
 builder.Services.AddScoped<ProductionOutputService>();
+builder.Services.AddScoped<MachineService>();
 
 builder.Services.AddScoped<StockMovementService>();
 builder.Services.AddScoped<InventoryItemService>();

@@ -17,63 +17,56 @@ public class InventoryCountController : ControllerBase
         _service = service;
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateInventoryCountDto dto)
     {
 
-/*         if (!User.HasClaim("permission", "CREATE:INVENTORY_COUNTS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "CREATE:INVENTORY_COUNTS")) return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
 
-/*         if (!User.HasClaim("permission", "VIEW:INVENTORY_COUNTS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "VIEW:INVENTORY_COUNTS")) return Forbid();
 
         var result = await _service.GetAllAsync();
 
-        if (result == null)
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
 
-/*         if (!User.HasClaim("permission", "VIEW:GOODS_RECEIPTS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "VIEW:INVENTORY_COUNTS")) return Forbid();
 
         var result = await _service.GetByIdAsync(id);
 
-        if (result == null)
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
 
-/*         if (!User.HasClaim("permission", "DELETE:INVENTORY_COUNTS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "DELETE:INVENTORY_COUNTS")) return Forbid();
 
         var result = await _service.DeleteAsync(id);
 
-        if (!result)
-            NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }

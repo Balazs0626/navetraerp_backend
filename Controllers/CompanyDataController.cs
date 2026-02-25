@@ -18,34 +18,30 @@ public class CompanyDataController : ControllerBase
         _service = service;
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetById()
     {
 
-/*         if (!User.HasClaim("permission", "VIEW:PRODUCTS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "VIEW:COMPANY_DATA")) return Forbid();
 
         var result = await _service.GetByIdAsync();
 
-        if (result == null)
-            NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpPut]
     public async Task<IActionResult> Update([FromBody] CompanyData model)
     {
 
-/*         if (!User.HasClaim("permission", "EDIT:PRODUCTS"))
-            return Forbid(); */
+        if (!User.HasClaim("permission", "EDIT:COMPANY_DATA")) return Forbid();
 
         var result = await _service.UpdateAsync(model);
 
-        if (!result)
-            NotFound();
+        if (!result) return NotFound();
 
         return Ok(result);
     }
