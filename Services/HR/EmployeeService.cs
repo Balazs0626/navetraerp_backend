@@ -169,8 +169,11 @@ public class EmployeeService
                 e.bank_account_number AS BankAccountNumber,
                 e.hire_date AS HireDate,
                 e.department_id AS DepartmentId,
+                d.department_name AS DepartmentName,
                 e.position_id AS PositionId,
+                p.position_name AS PositionName,
                 e.user_id AS UserID,
+                u.username AS UserName,
                 e.email AS Email,
                 e.phone_number AS PhoneNumber,
                 e.salary AS Salary,
@@ -190,6 +193,9 @@ public class EmployeeService
                 t.address_1 AS TempAddressFirstLine,
                 t.address_2 AS TempAddressSecondLine
             FROM Employees e
+            JOIN Positions p ON p.id = e.position_id
+            JOIN Departments d ON d.id = e.department_id
+            LEFT JOIN Users u ON u.id = e.user_id
             JOIN Addresses a ON a.id = e.address_id
             LEFT JOIN Addresses t ON t.id = e.temp_address_id
             WHERE e.id = @id";

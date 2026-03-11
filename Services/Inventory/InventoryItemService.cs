@@ -58,7 +58,6 @@ public class InventoryItemService
             transaction.Rollback();
             throw;
         }
-
     }
 
     public async Task<IEnumerable<InventoryItemListDto>> GetAllAsync(int? warehouseId = null, int? productId = null, string? batchNumber = null)
@@ -68,7 +67,9 @@ public class InventoryItemService
         string query = @"
             SELECT
                 ii.id AS Id,
+                ii.warehouse_id AS WarehouseId,
                 w.name AS WarehouseName,
+                ii.product_id AS ProductId,
                 p.name AS ProductName,
                 p.unit AS ProductUnit,
                 ii.quantity_on_hand AS QuantityOnHand,

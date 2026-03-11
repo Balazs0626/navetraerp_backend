@@ -133,7 +133,7 @@ public class AiController : ControllerBase
                     - PurchaseOrderItems(purchase_order_id, product_id, quantity_ordered, price_per_unit, discount, tax_rate)
                     - GoodsReceipts(id, purchase_order_id, warehouse_id, receipt_date, received_by_employee_id)
                     - GoodsReceiptItems(goods_receipt_id, product_id, quantity_received, batch_number)
-                    - Products(id, name, unit)
+                    - Products(id, sku, name, unit)
                     - Warehouses(id, name, address_id)
                     - Employees(id, first_name, last_name)
 
@@ -223,7 +223,7 @@ public class AiController : ControllerBase
                     - SalesOrderItems(sales_order_id, product_id, quantity_ordered, unit_price, discount, tax_rate, shipped_quantity)
                     - Invoices(id, sales_order_id, invoice_date, due_date, tota_amount, paid_amount, status)
                     - InvoiceItems(invoice_id, product_id, quantity, unit_price, tax_rate)
-                    - Products(id, name, unit)
+                    - Products(id, sku, name, unit)
                     - Warehouses(id, name, address_id)
 
                     STÁTUSZOK:
@@ -264,6 +264,191 @@ public class AiController : ControllerBase
                 model = "llama-3.3-70b-versatile",
                 messages = new[] {
                     new { role = "system", content = "Te egy NavetraERP Értékesítés asszisztens vagy. Az adatbázisból kapott JSON alapján válaszolj. A JSON-ban az oszlopnevek (aliasok) segítenek értelmezni a számokat. Légy rövid és lényegretörő!" },
+                    new { role = "user", content = $"Kérdés: {request.Prompt} \n Adatok: {serializedData}" }
+                },
+                temperature = 0.5
+            };
+
+            var summaryResponse = await _httpClient.PostAsJsonAsync(url, summaryPayload);
+            string finalAnswer = "Az adatokat sikerült lekérni, de az elemzés elakadt.";
+
+            if (summaryResponse.IsSuccessStatusCode)
+            {
+                using var summaryJsonDoc = await summaryResponse.Content.ReadFromJsonAsync<JsonDocument>();
+                finalAnswer = summaryJsonDoc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+            }
+
+            return Ok(new { 
+                query = sqlQuery, 
+                data = dbResult, 
+                answer = finalAnswer 
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = "SQL hiba", details = ex.Message, query = sqlQuery });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("production")]
+    public async Task<IActionResult> AnalyzeProduction([FromBody] AiRequest request)
+    {
+        var apiKey = _configuration["Groq:ApiKey"];
+        var url = "https://api.groq.com/openai/v1/chat/completions";
+
+        _httpClient.DefaultRequestHeaders.Clear();
+        _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+
+        var sqlPayload = new
+        {
+            model = "llama-3.3-70b-versatile",
+            messages = new[] {
+                new { 
+                    role = "system", 
+                    content = @"Te egy NavetraERP Termelés Modul szakértő SQL generátor vagy. 
+                    TÁBLÁK:
+                    - Machines(id, name, code, description, active)
+                    - ProductionOrders(id, product_id, planned_quantity, start_date, end_date, status, responsible_employee_id)
+                    - ProductionConsumptions(production_order_id, component_product_id, quantity_used, warehouse_id, date_used)
+                    - ProductionOrderMachines(production_order_id, machine_id, start_date, end_date)
+                    - ProductionOutputs(id, production_order_id, product_id, quantity_produced, warehouse_id, date_produced)
+                    - BillOfMaterials(product_id, component_product_id, quantity_per_unit)
+                    - Products(id, sku, name, unit)
+                    - Warehouses(id, name, address_id)
+                    - Addresses(id, country, region, post_code, city, address_1, address_2)
+                    - Employees(id, first_name, last_name)
+
+                    STÁTUSZOK:
+                    - ProductionOrders - status [planned, in_progress, finished]
+
+                    SZABÁLYOK:
+                    1. ALIASOK (KÖTELEZŐ): Minden számított mezőnek (COUNT, SUM, AVG) adj nevet az 'AS' használatával! (Pl: SELECT COUNT(*) AS Darabszam)
+                    2. KERESÉS: Csak azokat az oszlopokat használd a WHERE feltételben, amelyekre a felhasználó konkrétan rákérdezett.
+                    3. JOIN: Használd a táblák közötti logikai kapcsolatokat. ID-t sose írj!
+                    4. Csak nyers T-SQL SELECT-et adj vissza, szöveg vagy kódblokk nélkül!
+                    5. Csak a megnevezett táblákban kereshetsz, ha más a kérdés akkor nincs válasz!
+                    6. Ha egy bizonylat számára kérdeznek az a ProductionOrder-nél CONCAT('MO-', FORMAT(id, '00000')), a ProductionOutput-nál CONCAT('GO-', FORMAT(id, '00000')). Midnig a szám 5 karatker hosszú legyen.
+                    7. A státuszokat és típusokat fordítsd le."
+                },
+                new { role = "user", content = request.Prompt }
+            },
+            temperature = 0
+        };
+
+        var sqlResponse = await _httpClient.PostAsJsonAsync(url, sqlPayload);
+        if (!sqlResponse.IsSuccessStatusCode) return BadRequest($"Groq SQL hiba: {await sqlResponse.Content.ReadAsStringAsync()}");
+
+        using var sqlJsonDoc = await sqlResponse.Content.ReadFromJsonAsync<JsonDocument>();
+        string sqlQuery = sqlJsonDoc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+        
+        sqlQuery = sqlQuery.Replace("```sql", "").Replace("```", "").Trim();
+
+        try 
+        {
+            using var connection = new SqlConnection(_connectionString);
+            var dbResult = await connection.QueryAsync(sqlQuery);
+
+            string serializedData = JsonSerializer.Serialize(dbResult);
+            
+            var summaryPayload = new
+            {
+                model = "llama-3.3-70b-versatile",
+                messages = new[] {
+                    new { role = "system", content = "Te egy NavetraERP Termelés asszisztens vagy. Az adatbázisból kapott JSON alapján válaszolj. A JSON-ban az oszlopnevek (aliasok) segítenek értelmezni a számokat. Légy rövid és lényegretörő!" },
+                    new { role = "user", content = $"Kérdés: {request.Prompt} \n Adatok: {serializedData}" }
+                },
+                temperature = 0.5
+            };
+
+            var summaryResponse = await _httpClient.PostAsJsonAsync(url, summaryPayload);
+            string finalAnswer = "Az adatokat sikerült lekérni, de az elemzés elakadt.";
+
+            if (summaryResponse.IsSuccessStatusCode)
+            {
+                using var summaryJsonDoc = await summaryResponse.Content.ReadFromJsonAsync<JsonDocument>();
+                finalAnswer = summaryJsonDoc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+            }
+
+            return Ok(new { 
+                query = sqlQuery, 
+                data = dbResult, 
+                answer = finalAnswer 
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = "SQL hiba", details = ex.Message, query = sqlQuery });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("inventory")]
+    public async Task<IActionResult> AnalyzeInventory([FromBody] AiRequest request)
+    {
+        var apiKey = _configuration["Groq:ApiKey"];
+        var url = "https://api.groq.com/openai/v1/chat/completions";
+
+        _httpClient.DefaultRequestHeaders.Clear();
+        _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+
+        var sqlPayload = new
+        {
+            model = "llama-3.3-70b-versatile",
+            messages = new[] {
+                new { 
+                    role = "system", 
+                    content = @"Te egy NavetraERP Raktárkezelő Modul szakértő SQL generátor vagy. 
+                    TÁBLÁK:
+                    - InventoryItems(warehouse_id, product_id, quantity_on_hand, batch_number, last_updated)
+                    - InventoryCounts(id, warehouse_id, count_date, counted_by_id)
+                    - InventoryCountItems(count_id, product_id, counted_quantity, system_quantity)
+                    - StockMovements(product_id, from_warehouse_id, to_warehouse_id, movement_type, quantity, reference_document, movement_date, performed_by_id)
+                    - DeliveryNotes(id, customer_id, license_plate, status, create_date, shipping_date)
+                    - DeliveryNoteItems(delivery_note_id, product_id, quantity)
+                    - Products(id, sku, name, unit)
+                    - Warehouses(id, name, address_id)
+                    - Customers(id, name, tax_number, eu_tax_number, shipping_address_id)
+                    - Addresses(id, country, region, post_code, city, address_1, address_2)
+                    - Employees(id, first_name, last_name)
+
+                    STÁTUSZOK:
+                    - DeliveryNotes - status [draft, shipped, delivered, cancelled]
+
+                    SZABÁLYOK:
+                    1. ALIASOK (KÖTELEZŐ): Minden számított mezőnek (COUNT, SUM, AVG) adj nevet az 'AS' használatával! (Pl: SELECT COUNT(*) AS Darabszam)
+                    2. KERESÉS: Csak azokat az oszlopokat használd a WHERE feltételben, amelyekre a felhasználó konkrétan rákérdezett.
+                    3. JOIN: Használd a táblák közötti logikai kapcsolatokat. ID-t sose írj!
+                    4. Csak nyers T-SQL SELECT-et adj vissza, szöveg vagy kódblokk nélkül!
+                    5. Csak a megnevezett táblákban kereshetsz, ha más a kérdés akkor nincs válasz!
+                    6. Ha egy bizonylat számára kérdeznek az a DeliveryNotes-nál CONCAT('SZL-', FORMAT(id, '00000')). Mindig a szám 5 karatker hosszú legyen.
+                    7. A státuszokat és típusokat fordítsd le."
+                },
+                new { role = "user", content = request.Prompt }
+            },
+            temperature = 0
+        };
+
+        var sqlResponse = await _httpClient.PostAsJsonAsync(url, sqlPayload);
+        if (!sqlResponse.IsSuccessStatusCode) return BadRequest($"Groq SQL hiba: {await sqlResponse.Content.ReadAsStringAsync()}");
+
+        using var sqlJsonDoc = await sqlResponse.Content.ReadFromJsonAsync<JsonDocument>();
+        string sqlQuery = sqlJsonDoc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+        
+        sqlQuery = sqlQuery.Replace("```sql", "").Replace("```", "").Trim();
+
+        try 
+        {
+            using var connection = new SqlConnection(_connectionString);
+            var dbResult = await connection.QueryAsync(sqlQuery);
+
+            string serializedData = JsonSerializer.Serialize(dbResult);
+            
+            var summaryPayload = new
+            {
+                model = "llama-3.3-70b-versatile",
+                messages = new[] {
+                    new { role = "system", content = "Te egy NavetraERP Raktárkezelő asszisztens vagy. Az adatbázisból kapott JSON alapján válaszolj. A JSON-ban az oszlopnevek (aliasok) segítenek értelmezni a számokat. Légy rövid és lényegretörő!" },
                     new { role = "user", content = $"Kérdés: {request.Prompt} \n Adatok: {serializedData}" }
                 },
                 temperature = 0.5

@@ -13,8 +13,11 @@ public class EmployeeDto
     public string BankAccountNumber { get; set; } = String.Empty;
     public DateTime HireDate { get; set; }
     public int DepartmentId { get; set; }
+    public string DepartmentName { get; set; } = String.Empty;
     public int PositionId { get; set; }
+    public string PositionName { get; set; } = String.Empty;
     public int? UserId { get; set; }
+    public string? UserName { get; set; } = null;
     public string Email { get; set; } = String.Empty;
     public string PhoneNumber { get; set; } = String.Empty;
     public decimal Salary { get; set; }

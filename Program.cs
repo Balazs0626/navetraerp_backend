@@ -52,6 +52,7 @@ builder.Services.AddScoped<MachineService>();
 builder.Services.AddScoped<StockMovementService>();
 builder.Services.AddScoped<InventoryItemService>();
 builder.Services.AddScoped<InventoryCountService>();
+builder.Services.AddScoped<DeliveryNoteService>();
 
 builder.Services.AddScoped<CompanyDataService>();
 
@@ -101,6 +102,13 @@ builder.Services.AddSwaggerGen(opt =>
 });
 
 var app = builder.Build();
+
+var connectionString = app.Configuration.GetConnectionString("Default");
+
+if (!string.IsNullOrEmpty(connectionString))
+{
+    NavetraERP.Migrations.MigrationRunner.Run(connectionString);
+}
 
 if (app.Environment.IsDevelopment())
 {
