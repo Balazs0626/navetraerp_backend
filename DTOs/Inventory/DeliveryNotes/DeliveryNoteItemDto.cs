@@ -7,5 +7,6 @@ public class DeliveryNoteItemDto
     public string ProductSku { get; set; } = String.Empty;
     public string ProductName { get; set; } = String.Empty;
     public string ProductUnit { get; set; } = String.Empty;
+    public string BatchNumber { get; set; } = String.Empty;
     public decimal Quantity { get; set; }
 }

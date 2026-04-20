@@ -4,10 +4,6 @@ using NavetraERP.DTOs;
 
 namespace NavetraERP.Services;
 
-/*
-    GoodsReceiptService, SalesOrderService is hozzáfér a táblához
-*/
-
 public class InventoryItemService
 {
 

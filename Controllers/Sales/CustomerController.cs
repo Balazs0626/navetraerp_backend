@@ -35,13 +35,16 @@ public class CustomerController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
 
-        if (!User.HasClaim("permission", "VIEW:CUSTOMERS"))
-            return Forbid();
+        if (!User.HasClaim("permission", "VIEW:CUSTOMERS") &&
+            !User.HasClaim("permission", "CREATE:SALES_ORDERS") &&
+            !User.HasClaim("permission", "EDIT:SALES_ORDERS") &&
+            !User.HasClaim("permission", "CREATE:DELIVERY_NOTES") &&
+            !User.HasClaim("permission", "EDIT:DELIVERY_NOTES")
+        ) return Forbid();
 
         var result = await _service.GetAllAsync();
 
-        if (result == null)
-            return NotFound();
+        if (result == null) return NotFound();
 
         return Ok(result);
     }

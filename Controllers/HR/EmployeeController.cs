@@ -36,7 +36,20 @@ public class EmployeeController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string? fullName, [FromQuery] int? departmentId, [FromQuery] int? positionId)
     {
 
-        if (!User.HasClaim("permission", "VIEW:EMPLOYEES")) return Forbid();
+        if (!User.HasClaim("permission", "VIEW:EMPLOYEES") &&
+            !User.HasClaim("permission", "CREATE:WORK_SCHEDULES") &&
+            !User.HasClaim("permission", "CREATE:LEAVE_REQUESTS") &&
+            !User.HasClaim("permission", "CREATE:PERFORMANCE_REVIEWS") &&
+            !User.HasClaim("permission", "CREATE:INVENTORY_COUNTS") &&
+            !User.HasClaim("permission", "CREATE:WAREHOUSES") &&
+            !User.HasClaim("permission", "EDIT:WAREHOUSES") &&
+            !User.HasClaim("permission", "CREATE:GOODS_RECEIPTS") &&
+            !User.HasClaim("permission", "CREATE:PRODUCTION_ORDERS") &&
+            !User.HasClaim("permission", "EDIT:PRODUCTION_ORDERS") &&
+            !User.HasClaim("permission", "CREATE:INVENTORY_COUNTS") &&
+            !User.HasClaim("permission", "CREATE:STOCK_MOVEMENTS") &&
+            !User.HasClaim("permission", "EDIT:STOCK_MOVEMENTS")
+        ) return Forbid();
 
         var result = await _service.GetAllAsync(fullName, departmentId, positionId);
 

@@ -12,8 +12,8 @@ namespace NavetraERP.Controllers;
 public class RoleController : ControllerBase
 {
 
-    RoleService _roleService;
-    PermissionService _permissionService;
+    private readonly RoleService _roleService;
+    private readonly PermissionService _permissionService;
 
     public RoleController(RoleService roleService, PermissionService permissionService)
     {

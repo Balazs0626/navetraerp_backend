@@ -1,11 +1,11 @@
 CREATE TABLE Customers (
 	id INT IDENTITY(1, 1) PRIMARY KEY,
-	[name] VARCHAR(100) NOT NULL,
-	tax_number VARCHAR(50) NOT NULL,
-	eu_tax_number VARCHAR(50) NOT NULL,
-	bank_account_number VARCHAR(50) NOT NULL,
-	email VARCHAR(50) NOT NULL,
-	phone_number VARCHAR(50) NOT NULL,
+	[name] NVARCHAR(100) NOT NULL,
+	tax_number NVARCHAR(50) NOT NULL,
+	eu_tax_number NVARCHAR(50) NOT NULL,
+	bank_account_number NVARCHAR(50) NOT NULL,
+	email NVARCHAR(50) NOT NULL,
+	phone_number NVARCHAR(50) NOT NULL,
 	billing_address_id INT NOT NULL REFERENCES Addresses(id),
 	shipping_address_id INT NOT NULL REFERENCES Addresses(id)
 );
@@ -15,7 +15,7 @@ CREATE TABLE SalesOrders (
 	customer_id INT NOT NULL REFERENCES Customers(id),
 	order_date DATE NOT NULL,
 	required_delivery_date DATE NOT NULL,
-	[status] VARCHAR(20) NOT NULL,
+	[status] NVARCHAR(20) NOT NULL,
 	total_amount DECIMAL(18, 2) NOT NULL
 );
 
@@ -37,7 +37,7 @@ CREATE TABLE Invoices (
 	due_date DATE NOT NULL,
 	total_amount DECIMAL(18, 2) NOT NULL,
 	paid_amount DECIMAL(18, 2) NOT NULL,
-	[status] VARCHAR(20) NOT NULL
+	[status] NVARCHAR(20) NOT NULL
 );
 
 CREATE TABLE InvoiceItems (

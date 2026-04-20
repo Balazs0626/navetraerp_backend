@@ -17,24 +17,27 @@ public class MachineController : ControllerBase
         _service = service;
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateMachineDto dto)
     {
 
-        //if (!User.HasClaim("permission", "CREATE:MACHINES")) return Forbid();
+        if (!User.HasClaim("permission", "CREATE:MACHINES")) return Forbid();
 
         var result = await _service.CreateAsync(dto);
 
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
 
-        //if (!User.HasClaim("permission", "VIEW:MACHINES"))  return Forbid();
+        if (!User.HasClaim("permission", "VIEW:MACHINES") &&
+            !User.HasClaim("permission", "CREATE:PRODUCTION_ORDERS") &&
+            !User.HasClaim("permission", "EDIT:PRODUCTION_ORDERS")
+        )  return Forbid();
 
         var result = await _service.GetAllAsync();
 
@@ -43,12 +46,12 @@ public class MachineController : ControllerBase
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
 
-        //if (!User.HasClaim("permission", "VIEW:MACHINES")) return Forbid();
+        if (!User.HasClaim("permission", "VIEW:MACHINES")) return Forbid();
 
         var result = await _service.GetByIdAsync(id);
 
@@ -57,12 +60,12 @@ public class MachineController : ControllerBase
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] MachineDto dto)
     {
 
-        //if (!User.HasClaim("permission", "EDIT:MACHINES")) return Forbid();
+        if (!User.HasClaim("permission", "EDIT:MACHINES")) return Forbid();
 
         var result = await _service.UpdateAsync(id, dto);
 
@@ -71,12 +74,12 @@ public class MachineController : ControllerBase
         return Ok(result);
     }
 
-    //[Authorize]
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
 
-        //if (!User.HasClaim("permission", "DELETE:MACHINES")) return Forbid();
+        if (!User.HasClaim("permission", "DELETE:MACHINES")) return Forbid();
 
         var result = await _service.DeleteAsync(id);
 

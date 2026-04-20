@@ -31,14 +31,16 @@ public class ProductionOutputService
                     product_id,
                     quantity_produced,
                     warehouse_id,
-                    date_produced
+                    date_produced,
+                    batch_number
                 )
                 VALUES (
                     @ProductionOrderId,
                     @ProductId,
                     @QuantityProduced,
                     @WarehouseId,
-                    @DateProduced
+                    @DateProduced,
+                    @BatchNumber
                 );
                 SELECT CAST(SCOPE_IDENTITY() AS INT)";
 
@@ -71,18 +73,39 @@ public class ProductionOutputService
                 MovementDate = dto.DateProduced
             }, transaction);
 
-            const string updateInventoryItem = @"
-                UPDATE InventoryItems 
-                SET 
-                    quantity_on_hand = quantity_on_hand + @QuantityOnHand,
-                    last_updated = GETDATE()
-                WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+            const string upsertInventoryItem = @"
+                IF EXISTS (SELECT 1 FROM InventoryItems WHERE product_id = @ProductId AND warehouse_id = @WarehouseId AND batch_number = @BatchNumber)
+                BEGIN
+                    UPDATE InventoryItems 
+                    SET 
+                        quantity_on_hand = quantity_on_hand + @QuantityOnHand,
+                        last_updated = GETDATE()
+                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId AND batch_number = @BatchNumber
+                END
+                ELSE
+                BEGIN
+                    INSERT INTO InventoryItems (
+                        product_id, 
+                        warehouse_id, 
+                        quantity_on_hand,
+                        batch_number,
+                        last_updated
+                    )
+                    VALUES (
+                        @ProductId, 
+                        @WarehouseId, 
+                        @QuantityOnHand,
+                        @BatchNumber,
+                        GETDATE()
+                    )
+                END";
 
-            await connection.ExecuteAsync(updateInventoryItem, new
+            await connection.ExecuteAsync(upsertInventoryItem, new
             {
                 ProductId = dto.ProductId,
                 WarehouseId = dto.WarehouseId,
-                QuantityOnHand = dto.QuantityProduced
+                QuantityOnHand = dto.QuantityProduced,
+                BatchNumber = dto.BatchNumber
             }, transaction);
 
             transaction.Commit();
@@ -146,7 +169,8 @@ public class ProductionOutputService
                     po.quantity_produced AS QuantityProduced,
                     po.warehouse_id AS WarehouseId,
                     w.name AS WarehouseName,
-                    po.date_produced AS DateProduced
+                    po.date_produced AS DateProduced,
+                    po.batch_number AS BatchNumber
                 FROM ProductionOutputs po
                 JOIN Products p ON p.id = po.product_id
                 JOIN Warehouses w ON w.id = po.warehouse_id
@@ -183,31 +207,28 @@ public class ProductionOutputService
 
             var referenceDocument = $"GO-{id.ToString().PadLeft(5, '0')}";
 
-            const string getOldQuery = @"
-                SELECT
-                    quantity_produced
-                FROM ProductionOutputs
+            const string getOldDataQuery = @"
+                SELECT product_id, warehouse_id, quantity_produced, batch_number 
+                FROM ProductionOutputs 
                 WHERE id = @id";
 
-            var oldQuantity = await connection.QueryFirstOrDefaultAsync<int?>(getOldQuery, new
-            {
-                id
-            }, transaction);
+            var oldData = await connection.QueryFirstOrDefaultAsync(getOldDataQuery, new { id }, transaction);
 
-            if (oldQuantity != null)
+            if (oldData != null)
             {
                 const string restoreInventoryItem = @"
                     UPDATE InventoryItems 
                     SET 
                         quantity_on_hand = quantity_on_hand - @QuantityToRestore,
                         last_updated = GETDATE()
-                    WHERE product_id = @ProductId AND warehouse_id = @OriginalWarehouseId";
+                    WHERE product_id = @ProductId AND warehouse_id = @OriginalWarehouseId AND batch_number = @BatchNumber";
 
                 await connection.ExecuteAsync(restoreInventoryItem, new
                 {
-                    ProductId = dto.ProductId,
-                    OriginalWarehouseId = dto.WarehouseId, 
-                    QuantityToRestore = oldQuantity
+                    ProductId = oldData.product_id,
+                    OriginalWarehouseId = oldData.warehouse_id, 
+                    QuantityToRestore = oldData.quantity_produced,
+                    BatchNumber = oldData.batch_number
                 }, transaction);
             }
 
@@ -221,7 +242,8 @@ public class ProductionOutputService
                     product_id = @ProductId,
                     quantity_produced = @QuantityProduced,
                     warehouse_id = @WarehouseId,
-                    date_produced = @DateProduced
+                    date_produced = @DateProduced,
+                    batch_number = @BatchNumber
                 WHERE id = @id";
 
             var parameters = new DynamicParameters(dto);
@@ -256,19 +278,39 @@ public class ProductionOutputService
                 MovementDate = dto.DateProduced
             }, transaction);
 
+            const string updateOrInsertInventoryItem = @"
+                IF EXISTS (SELECT 1 FROM InventoryItems WHERE product_id = @ProductId AND warehouse_id = @WarehouseId AND batch_number = @BatchNumber)
+                BEGIN
+                    UPDATE InventoryItems 
+                    SET 
+                        quantity_on_hand = quantity_on_hand + @QuantityOnHand,
+                        last_updated = GETDATE()
+                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId AND batch_number = @BatchNumber
+                END
+                ELSE
+                BEGIN
+                    INSERT INTO InventoryItems (
+                        product_id, 
+                        warehouse_id, 
+                        quantity_on_hand,
+                        batch_number,
+                        last_updated
+                    )
+                    VALUES (
+                        @ProductId, 
+                        @WarehouseId, 
+                        @QuantityOnHand,
+                        @BatchNumber,
+                        GETDATE()
+                    )
+                END";
 
-            const string updateInventoryItem = @"
-                UPDATE InventoryItems 
-                SET 
-                    quantity_on_hand = quantity_on_hand + @QuantityOnHand,
-                    last_updated = GETDATE()
-                WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
-
-            await connection.ExecuteAsync(updateInventoryItem, new
+            await connection.ExecuteAsync(updateOrInsertInventoryItem, new
             {
                 ProductId = dto.ProductId,
                 WarehouseId = dto.WarehouseId,
-                QuantityOnHand = dto.QuantityProduced
+                QuantityOnHand = dto.QuantityProduced,
+                BatchNumber = dto.BatchNumber
             }, transaction);
 
             transaction.Commit();
@@ -282,36 +324,6 @@ public class ProductionOutputService
         }
     }
 
-/*     public async Task<bool> DeleteAsync(int id)
-    {
-        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
-
-        await connection.OpenAsync();
-
-        var transaction = connection.BeginTransaction();
-
-        try
-        {
-            const string delete = @"
-                DELETE FROM ProductionOutputs 
-                WHERE id = @id";
-
-            var rowsAffected = await connection.ExecuteAsync(delete, new
-            {
-                id
-            }, transaction);
-
-            transaction.Commit();
-
-            return rowsAffected > 0;
-        }
-        catch (Exception)
-        {
-            transaction.Rollback();
-            throw;
-        }
-    } */
-
     public async Task<bool> DeleteAsync(int id)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
@@ -324,7 +336,8 @@ public class ProductionOutputService
                 SELECT 
                     product_id AS ProductId, 
                     warehouse_id AS WarehouseId, 
-                    quantity_produced AS Quantity 
+                    quantity_produced AS Quantity,
+                    batch_number AS BatchNumber
                 FROM ProductionOutputs 
                 WHERE id = @id";
 
@@ -337,13 +350,14 @@ public class ProductionOutputService
                     SET 
                         quantity_on_hand = quantity_on_hand - @Quantity,
                         last_updated = GETDATE()
-                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId AND batch_number = @BatchNumber";
 
                 await connection.ExecuteAsync(reduceInventory, new
                 {
                     ProductId = outputData.ProductId,
                     WarehouseId = outputData.WarehouseId,
-                    Quantity = outputData.Quantity
+                    Quantity = outputData.Quantity,
+                    BatchNumber = outputData.BatchNumber
                 }, transaction);
 
                 var referenceDocument = $"GO-{id.ToString().PadLeft(5, '0')}"; 

@@ -34,7 +34,10 @@ public class SalesOrderController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string? receiptNumber, [FromQuery] DateTime? orderDate, [FromQuery] string? status)
     {
 
-        if (!User.HasClaim("permission", "VIEW:SALES_ORDERS")) return Forbid();
+        if (!User.HasClaim("permission", "VIEW:SALES_ORDERS") &&
+            !User.HasClaim("permission", "CREATE:INVOICES") &&
+            !User.HasClaim("permission", "EDIT:INVOICES")
+        ) return Forbid();
 
         var result = await _service.GetAllAsync(receiptNumber, orderDate, status);
 

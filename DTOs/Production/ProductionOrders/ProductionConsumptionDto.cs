@@ -8,6 +8,7 @@ public class ProductionConsumptionDto
     public string ComponentProductName { get; set; } = String.Empty;
     public string ComponentProductUnit { get; set; } = String.Empty;
     public decimal QuantityUsed { get; set; }
+    public string BatchNumber { get; set; } = String.Empty;
     public int WarehouseId { get; set; }
     public string WarehouseName { get; set; } = String.Empty;
     public DateTime DateUsed { get; set; }

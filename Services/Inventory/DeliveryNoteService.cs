@@ -58,19 +58,22 @@ public class DeliveryNoteService
                     INSERT INTO DeliveryNoteItems (
                         delivery_note_id,
                         product_id,
-                        quantity
+                        quantity,
+                        batch_number
                     )
                     VALUES (
                         @DeliveryNoteId,
                         @ProductId,
-                        @Quantity
+                        @Quantity,
+                        @BatchNumber
                     )";
 
                 var itemResult = await connection.ExecuteScalarAsync<int>(insertDeliveryNoteItem, new
                 {
                     DeliveryNoteId = result,
                     ProductId = item.ProductId,
-                    Quantity = item.Quantity
+                    Quantity = item.Quantity,
+                    BatchNumber = item.BatchNumber
                 }, transaction);
             }
 
@@ -206,7 +209,8 @@ public class DeliveryNoteService
                     p.sku AS ProductSku,
                     p.name AS ProductName,
                     p.unit AS ProductUnit,
-                    dni.quantity AS Quantity
+                    dni.quantity AS Quantity,
+                    dni.batch_number AS BatchNumber
                 FROM DeliveryNoteItems dni
                 JOIN Products p ON p.id = dni.product_id
                 WHERE delivery_note_id = @id";
@@ -271,19 +275,22 @@ public class DeliveryNoteService
                         INSERT INTO DeliveryNoteItems (
                             delivery_note_id,
                             product_id,
-                            quantity
+                            quantity,
+                            batch_number
                         )
                         VALUES (
                             @DeliveryNoteId,
                             @ProductId,
-                            @Quantity
+                            @Quantity,
+                            @BatchNumber
                         )";
 
                     var itemResult = await connection.ExecuteScalarAsync<int>(insertDeliveryNoteItem, new
                     {
                         DeliveryNoteId = id,
                         ProductId = item.ProductId,
-                        Quantity = item.Quantity
+                        Quantity = item.Quantity,
+                        BatchNumber = item.BatchNumber
                     }, transaction);
                 }
             }

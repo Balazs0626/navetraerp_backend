@@ -221,7 +221,7 @@ public class UserService
     public async Task<bool> ResetPasswordAsync(string email, string token, string newHash)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
-        // Egyszerre ellenőrizzük a tokent és a lejárati időt
+
         const string query = @"
             UPDATE Users 
             SET password_hash = @newHash, 

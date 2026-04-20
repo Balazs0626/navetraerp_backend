@@ -34,7 +34,10 @@ public class SupplierController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
 
-        if (!User.HasClaim("permission", "VIEW:SUPPLIERS")) return Forbid();
+        if (!User.HasClaim("permission", "VIEW:SUPPLIERS") &&
+            !User.HasClaim("permission", "CREATE:PURCHASE_ORDERS") &&
+            !User.HasClaim("permission", "EDIT:PURCHASE_ORDERS")
+        ) return Forbid();
 
         var result = await _service.GetAllAsync();
 

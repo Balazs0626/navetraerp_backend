@@ -54,14 +54,16 @@ public class ProductionOrderService
                         component_product_id,
                         quantity_used,
                         warehouse_id,
-                        date_used
+                        date_used,
+                        batch_number
                     )
                     VALUES (
                         @ProductionOrderId,
                         @ComponentProductId,
                         @QuantityUsed,
                         @WarehouseId,
-                        @DateUsed
+                        @DateUsed,
+                        @BatchNumber
                     )";
 
                 var itemResult = await connection.ExecuteScalarAsync<int>(insertProductionConsumption, new
@@ -70,7 +72,8 @@ public class ProductionOrderService
                     ComponentProductId = item.ComponentProductId,
                     QuantityUsed = item.QuantityUsed,
                     WarehouseId = item.WarehouseId,
-                    DateUsed = item.DateUsed
+                    DateUsed = item.DateUsed,
+                    BatchNumber = item.BatchNumber
                 }, transaction);
 
                 const string insertStockMovement = @"
@@ -105,13 +108,14 @@ public class ProductionOrderService
                     SET 
                         quantity_on_hand = quantity_on_hand - @QuantityOnHand,
                         last_updated = GETDATE()
-                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId AND batch_number = @BatchNumber";
 
                 await connection.ExecuteAsync(updateInventoryItem, new
                 {
                     ProductId = item.ComponentProductId,
                     WarehouseId = item.WarehouseId,
-                    QuantityOnHand = item.QuantityUsed
+                    QuantityOnHand = item.QuantityUsed,
+                    BatchNumber = item.BatchNumber
                 }, transaction);
             }
 
@@ -267,7 +271,8 @@ public class ProductionOrderService
                     pc.quantity_used AS QuantityUsed,
                     pc.warehouse_id AS WarehouseId,
                     w.name AS WarehouseName,
-                    pc.date_used AS DateUsed
+                    pc.date_used AS DateUsed,
+                    pc.batch_number AS BatchNumber
                 FROM ProductionConsumptions pc
                 JOIN Products p ON p.id = pc.component_product_id
                 JOIN Warehouses w On w.id = pc.warehouse_id
@@ -311,83 +316,6 @@ public class ProductionOrderService
         }
     }
 
-    /* public async Task<bool> UpdateAsync(int id, ProductionOrderDto dto)
-    {
-        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
-
-        await connection.OpenAsync();
-
-        using var transaction = connection.BeginTransaction();
-
-        var rowsAffected = 0;
-
-        try
-        {
-            const string updateProductionOrder = @"
-                UPDATE ProductionOrders
-                SET
-                    product_id = @ProductId,
-                    planned_quantity = @PlannedQuantity,
-                    start_date = @StartDate,
-                    end_date = @EndDate,
-                    status = @Status,
-                    responsible_employee_id = @ResponsibleEmployeeId
-                WHERE id = @id";
-
-            var parameters = new DynamicParameters(dto);
-            parameters.Add("@id", id);
-
-            rowsAffected = await connection.ExecuteAsync(updateProductionOrder, parameters, transaction);
-
-            if (dto.Components != null)
-            {
-                var deleteQuery = "DELETE FROM ProductionConsumptions WHERE production_order_id = @id";
-
-                await connection.ExecuteAsync(deleteQuery, new
-                {
-                    id
-                }, transaction);
-
-                foreach (var item in dto.Components)
-                {
-                    const string insertProductionConsumption = @"
-                        INSERT INTO ProductionConsumptions (
-                            production_order_id,
-                            component_product_id,
-                            quantity_used,
-                            warehouse_id,
-                            date_used
-                        )
-                        VALUES (
-                            @ProductionOrderId,
-                            @ComponentProductId,
-                            @QuantityUsed,
-                            @WarehouseId,
-                            @DateUsed
-                        )";
-
-                    var itemResult = await connection.ExecuteScalarAsync<int>(insertProductionConsumption, new
-                    {
-                        ProductionOrderId = id,
-                        ComponentProductId = item.ComponentProductId,
-                        QuantityUsed = item.QuantityUsed,
-                        WarehouseId = item.WarehouseId,
-                        DateUsed = item.DateUsed
-                    }, transaction);
-                }
-            }
-
-            transaction.Commit();
-
-            return rowsAffected > 0;
-        }
-        catch (Exception)
-        {
-            transaction.Rollback();
-            throw;
-        }
-    } */
-
     public async Task<bool> UpdateAsync(int id, ProductionOrderDto dto)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
@@ -404,7 +332,8 @@ public class ProductionOrderService
                 SELECT 
                     component_product_id AS ComponentProductId, 
                     quantity_used AS QuantityUsed,
-                    warehouse_id AS WarehouseId
+                    warehouse_id AS WarehouseId,
+                    batch_number AS BatchNumber
                 FROM ProductionConsumptions
                 WHERE production_order_id = @id";
 
@@ -417,7 +346,7 @@ public class ProductionOrderService
                     SET 
                         quantity_on_hand = quantity_on_hand + @QuantityToRestore,
                         last_updated = GETDATE()
-                    WHERE product_id = @ProductId AND warehouse_id = @OriginalWarehouseId";
+                    WHERE product_id = @ProductId AND warehouse_id = @OriginalWarehouseId AND batch_number = @BatchNumber";
 
                 foreach (var oldItem in oldItems)
                 {
@@ -425,7 +354,8 @@ public class ProductionOrderService
                     {
                         ProductId = oldItem.ComponentProductId,
                         OriginalWarehouseId = oldItem.WarehouseId, 
-                        QuantityToRestore = oldItem.QuantityUsed
+                        QuantityToRestore = oldItem.QuantityUsed,
+                        BatchNumber = oldItem.BatchNumber
                     }, transaction);
                 }
             }
@@ -447,8 +377,8 @@ public class ProductionOrderService
 
             if (dto.Components != null)
             {
-                var deleteSalesOrderItemQuery = "DELETE FROM ProductionConsumptions WHERE production_order_id = @id";
-                await connection.ExecuteAsync(deleteSalesOrderItemQuery, new { id }, transaction);
+                var deleteProductionCosnumptionQuery = "DELETE FROM ProductionConsumptions WHERE production_order_id = @id";
+                await connection.ExecuteAsync(deleteProductionCosnumptionQuery, new { id }, transaction);
 
                 var deleteStockMovementQuery = "DELETE FROM StockMovements WHERE reference_document = @ReferenceDocument";
                 await connection.ExecuteAsync(deleteStockMovementQuery, new { ReferenceDocument = referenceDocument }, transaction);
@@ -461,14 +391,16 @@ public class ProductionOrderService
                         component_product_id,
                         quantity_used,
                         warehouse_id,
-                        date_used
+                        date_used,
+                        batch_number
                     )
                     VALUES (
                         @ProductionOrderId,
                         @ComponentProductId,
                         @QuantityUsed,
                         @WarehouseId,
-                        @DateUsed
+                        @DateUsed,
+                        @BatchNumber
                     )";
 
                     var itemResult = await connection.ExecuteScalarAsync<int>(insertProductionConsumption, new
@@ -477,7 +409,8 @@ public class ProductionOrderService
                         ComponentProductId = item.ComponentProductId,
                         QuantityUsed = item.QuantityUsed,
                         WarehouseId = item.WarehouseId,
-                        DateUsed = item.DateUsed
+                        DateUsed = item.DateUsed,
+                        BatchNumber = item.BatchNumber
                     }, transaction);
 
                     const string insertStockMovement = @"
@@ -498,13 +431,14 @@ public class ProductionOrderService
                         SET 
                             quantity_on_hand = quantity_on_hand - @QuantityOnHand,
                             last_updated = GETDATE()
-                        WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+                        WHERE product_id = @ProductId AND warehouse_id = @WarehouseId AND batch_number = @BatchNumber";
 
                     await connection.ExecuteAsync(updateInventoryItem, new
                     {
                         ProductId = item.ComponentProductId,
                         WarehouseId = item.WarehouseId,
-                        QuantityOnHand = item.QuantityUsed
+                        QuantityOnHand = item.QuantityUsed,
+                        BatchNumber = item.BatchNumber
                     }, transaction);
                 }
             }
@@ -552,46 +486,6 @@ public class ProductionOrderService
         }
     }   
 
-/*     public async Task<bool> DeleteAsync(int id)
-    {
-        using var connection = new SqlConnection(_config.GetConnectionString("Default"));
-
-        await connection.OpenAsync();
-
-        var transaction = connection.BeginTransaction();
-
-        try
-        {
-
-            const string deleteProductionConsumption = @"
-                DELETE FROM ProductionConsumptions 
-                WHERE production_order_id = @id";
-
-            var rowsAffected = await connection.ExecuteAsync(deleteProductionConsumption, new
-            {
-                id
-            }, transaction);
-
-            const string deleteProductionOrder = @"
-                DELETE FROM ProductionOrders 
-                WHERE id = @id";
-
-            rowsAffected = await connection.ExecuteAsync(deleteProductionOrder, new
-            {
-                id
-            }, transaction);
-
-            transaction.Commit();
-
-            return rowsAffected > 0;
-        }
-        catch (Exception)
-        {
-            transaction.Rollback();
-            throw;
-        }
-    } */
-
     public async Task<bool> DeleteAsync(int id)
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
@@ -606,7 +500,8 @@ public class ProductionOrderService
                 SELECT 
                     component_product_id AS ComponentProductId, 
                     quantity_used AS QuantityUsed,
-                    warehouse_id AS WarehouseId
+                    warehouse_id AS WarehouseId,
+                    batch_number AS BatchNumber
                 FROM ProductionConsumptions 
                 WHERE production_order_id = @id";
 
@@ -619,7 +514,7 @@ public class ProductionOrderService
                     SET 
                         quantity_on_hand = quantity_on_hand + @QuantityToRestore,
                         last_updated = GETDATE()
-                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId AND batch_number = @BatchNumber";
 
                 foreach (var item in items)
                 {
@@ -627,7 +522,8 @@ public class ProductionOrderService
                     {
                         ProductId = item.ComponentProductId,
                         WarehouseId = item.WarehouseId,
-                        QuantityToRestore = item.QuantityUsed
+                        QuantityToRestore = item.QuantityUsed,
+                        BatchNumber = item.BatchNumber
                     }, transaction);
                 }
             }

@@ -33,6 +33,9 @@ public static class NumberToHungarianText
         if (number < 20)
             return number == 10 ? "tíz" : "tizen" + Ones[number - 10];
 
+        if (number < 30)
+            return number == 20 ? "húsz" : "huszon" + Ones[number - 20];
+
         if (number < 100)
         {
             int ten = number / 10;
@@ -49,7 +52,7 @@ public static class NumberToHungarianText
             return rest > 0 ? result + Convert(rest) : result;
         }
 
-        if (number < 1_000_000)
+        if (number < 1000000)
         {
             int thousand = number / 1000;
             int rest = number % 1000;
@@ -59,8 +62,8 @@ public static class NumberToHungarianText
             return rest > 0 ? result + "-" + Convert(rest) : result;
         }
 
-        int million = number / 1_000_000;
-        int remainder = number % 1_000_000;
+        int million = number / 1000000;
+        int remainder = number % 1000000;
 
         string millionText = Convert(million) + "millió";
         return remainder > 0 ? millionText + "-" + Convert(remainder) : millionText;

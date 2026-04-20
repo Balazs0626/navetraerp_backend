@@ -34,7 +34,10 @@ public class ProductionOrderController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string? receiptNumber, [FromQuery] int? product, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
     {
 
-        if (!User.HasClaim("permission", "VIEW:PRODUCTION_ORDERS")) return Forbid();
+        if (!User.HasClaim("permission", "VIEW:PRODUCTION_ORDERS") &&
+            !User.HasClaim("permission", "CREATE:PRODUCTION_OUTPUTS") &&
+            !User.HasClaim("permission", "EDIT:PRODUCTION_OUTPUTS")
+        ) return Forbid();
 
         var result = await _service.GetAllAsync(receiptNumber, product, startDate, endDate);
 

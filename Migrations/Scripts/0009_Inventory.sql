@@ -3,7 +3,7 @@ CREATE TABLE InventoryItems(
 	warehouse_id INT NOT NULL REFERENCES Warehouses(id),
 	product_id INT NOT NULL REFERENCES Products(id),
 	quantity_on_hand DECIMAL(18, 2) NOT NULL,
-	batch_number VARCHAR(50) NOT NULL,
+	batch_number NVARCHAR(50) NOT NULL,
 	last_updated DATETIME NOT NULL,
 );
 
@@ -12,9 +12,9 @@ CREATE TABLE StockMovements(
 	product_id INT NOT NULL REFERENCES Products(id),
 	from_warehouse_id INT REFERENCES Warehouses(id),
 	to_warehouse_id INT REFERENCES Warehouses(id),
-	movement_type VARCHAR(20) NOT NULL,
+	movement_type NVARCHAR(20) NOT NULL,
 	quantity DECIMAL(18, 2) NOT NULL,
-	reference_document VARCHAR(50),
+	reference_document NVARCHAR(50),
 	movement_date DATE NOT NULL,
 	performed_by_id INT REFERENCES Employees(id)
 );
@@ -37,8 +37,8 @@ CREATE TABLE InventoryCountItems(
 CREATE TABLE DeliveryNotes(
 	id INT IDENTITY(1, 1) PRIMARY KEY,
 	customer_id INT NOT NULL REFERENCES Customers(id),
-	license_plate VARCHAR(20) NOT NULL,
-	[status] VARCHAR(20) NOT NULL,
+	license_plate NVARCHAR(20) NOT NULL,
+	[status] NVARCHAR(20) NOT NULL,
 	create_date DATE NOT NULL,
 	shipping_date DATE NOT NULL
 );

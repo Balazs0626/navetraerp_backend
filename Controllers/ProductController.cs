@@ -35,7 +35,25 @@ public class ProductController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string? sku, [FromQuery] string? name, [FromQuery] bool? active)
     {
 
-        if (!User.HasClaim("permission", "VIEW:PRODUCTS")) return Forbid();
+        if (!User.HasClaim("permission", "VIEW:PRODUCTS") &&
+            !User.HasClaim("permission", "CREATE:PURCHASE_ORDERS") &&
+            !User.HasClaim("permission", "EDIT:PURCHASE_ORDERS") &&
+            !User.HasClaim("permission", "CREATE:GOODS_RECEIPTS") &&
+            !User.HasClaim("permission", "CREATE:SALES_ORDERS") &&
+            !User.HasClaim("permission", "EDIT:SALES_ORDERS") &&
+            !User.HasClaim("permission", "CREATE:INVOICES") &&
+            !User.HasClaim("permission", "EDIT:INVOICES") &&
+            !User.HasClaim("permission", "CREATE:PRODUCTION_ORDERS") &&
+            !User.HasClaim("permission", "EDIT:PRODUCTION_ORDERS") &&
+            !User.HasClaim("permission", "CREATE:PRODUCTION_OUTPUTS") &&
+            !User.HasClaim("permission", "EDIT:PRODUCTION_OUTPUTS") &&
+            !User.HasClaim("permission", "CREATE:INVENTORY_ITEMS") &&
+            !User.HasClaim("permission", "CREATE:STOCK_MOVEMENTS") &&
+            !User.HasClaim("permission", "EDIT:STOCK_MOVEMENTS") &&
+            !User.HasClaim("permission", "CREATE:INVENTORY_COUNTS") &&
+            !User.HasClaim("permission", "CREATE:DELIVERY_NOTES") &&
+            !User.HasClaim("permission", "EDIT:DELIVERY_NOTES")
+        ) return Forbid();
 
         var result = await _service.GetAllAsync(sku, name, active);
 

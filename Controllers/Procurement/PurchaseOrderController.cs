@@ -34,7 +34,9 @@ public class PurchaseOrderController : ControllerBase
     public async Task<IActionResult> GetAll([FromQuery] string? receiptNumber, [FromQuery] DateTime? orderDate, [FromQuery] string? status)
     {
 
-        if (!User.HasClaim("permission", "VIEW:PURCHASE_ORDERS")) return Forbid();
+        if (!User.HasClaim("permission", "VIEW:PURCHASE_ORDERS") &&
+            !User.HasClaim("permission", "CREATE:GOODS_RECEIPTS")
+        ) return Forbid();
 
         var result = await _service.GetAllAsync(receiptNumber, orderDate, status);
 

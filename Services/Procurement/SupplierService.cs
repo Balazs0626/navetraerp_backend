@@ -45,9 +45,9 @@ public class SupplierService
                 VALUES (
                     @Name,
                     @TaxNumber,
+                    @ContactPerson,
                     @EuTaxNumber,
                     @BankAccountNumber,
-                    @ContactPerson,
                     @Email,
                     @PhoneNumber,
                     @AddressId

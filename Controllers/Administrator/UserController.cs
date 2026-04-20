@@ -9,7 +9,7 @@ namespace NavetraERP.Controllers;
 [Route("api/users")]
 public class UserController : ControllerBase
 {
-    UserService _service;
+    private readonly UserService _service;
 
     public UserController(UserService service)
     {

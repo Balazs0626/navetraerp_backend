@@ -34,7 +34,18 @@ public class WarehouseController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
 
-        if (!User.HasClaim("permission", "VIEW:WAREHOUSES")) return Forbid();
+        if (!User.HasClaim("permission", "VIEW:WAREHOUSES") &&
+            !User.HasClaim("permission", "CREATE:GOODS_RECEIPTS") &&
+            !User.HasClaim("permission", "CREATE:SALES_ORDERS") &&
+            !User.HasClaim("permission", "EDIT:SALES_ORDERS") &&
+            !User.HasClaim("permission", "CREATE:PRODUCTION_ORDERS") &&
+            !User.HasClaim("permission", "EDIT:PRODUCTION_ORDERS") &&
+            !User.HasClaim("permission", "CREATE:PRODUCTION_OUTPUTS") &&
+            !User.HasClaim("permission", "CREATE:INVENTORY_ITEMS") &&
+            !User.HasClaim("permission", "CREATE:STOCK_MOVEMENTS") &&
+            !User.HasClaim("permission", "EDIT:STOCK_MOVEMENTS") &&
+            !User.HasClaim("permission", "CREATE:INVENTORY_COUNTS")
+        ) return Forbid();
 
         var result = await _service.GetAllAsync();
 

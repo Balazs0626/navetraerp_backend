@@ -27,20 +27,6 @@ public class AuthController : ControllerBase
         _email = email;
     }
 
-/*     [HttpPost("register")]
-    [AllowAnonymous]
-    public async Task<ActionResult<AuthResponse>> Register(RegisterRequest req)
-    {
-        var hash = BCrypt.Net.BCrypt.HashPassword(req.Password);
-        var user = await _users.CreateAsync(req.Username, hash, req.RoleId, req.Email);
-        if (user == null) return BadRequest("Nem sikerült létrehozni.");
-
-        var role = await _roles.GetRoleByIdAsync(req.RoleId) ?? new Role { Id = 0, RoleName = "Unknown" };
-        var perms = await _roles.GetPermissionsForRoleAsync(req.RoleId);
-
-        return Ok(_jwt.CreateToken(user, role, perms));
-    } */
-
     [HttpPost("login")]
     [AllowAnonymous]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest req)
@@ -106,9 +92,9 @@ public class AuthController : ControllerBase
         var subject = "Jelszó visszaállítás - NavetraERP";
         var message = $@"
             <h2>Jelszó visszaállítás</h2>
-            <p>Kérted a jelszavad visszaállítását. A lenti kód 15 percig érvényes:</p>
+            <p>Kérte a jelszava visszaállítását. A lenti kód 15 percig érvényes:</p>
             <p><strong>Token:</strong> {token}</p>
-            <p>Vagy kattints ide: <a href='http://localhost:5173/reset_password?token={token}&email={user.Email}'>Visszaállítás</a></p>";
+            <p>Vagy kattintson ide: <a href='http://localhost:5173/reset_password?token={token}&email={user.Email}'>Visszaállítás</a></p>";
 
         await _email.SendEmailAsync(user.Email, subject, message);
 

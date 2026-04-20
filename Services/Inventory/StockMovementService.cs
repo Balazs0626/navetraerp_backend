@@ -4,10 +4,6 @@ using NavetraERP.DTOs;
 
 namespace NavetraERP.Services;
 
-/*
-    GoodsReceiptService, SalesOrderService is hozzáfér a táblához
-*/
-
 public class StockMovementService
 {
 
@@ -248,8 +244,6 @@ public class StockMovementService
 
             if (oldMove != null && oldMove.movement_type == "transfer")
             {
-                // Ha transfer volt, akkor "visszacsináljuk":
-                // 1. Ahol levontunk (From), oda visszaadjuk (+)
                 if (oldMove.from_warehouse_id != null)
                 {
                     await connection.ExecuteAsync(@"
@@ -259,7 +253,6 @@ public class StockMovementService
                         new { Qty = oldMove.quantity, Pid = oldMove.product_id, Wid = oldMove.from_warehouse_id }, transaction);
                 }
 
-                // 2. Ahol hozzáadtunk (To), onnan levonjuk (-)
                 if (oldMove.to_warehouse_id != null)
                 {
                     await connection.ExecuteAsync(@"

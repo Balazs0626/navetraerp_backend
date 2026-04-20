@@ -4,7 +4,7 @@ CREATE TABLE ProductionOrders(
 	planned_quantity DECIMAL(18, 2) NOT NULL,
 	[start_date] DATE NOT NULL,
 	[end_date] DATE NOT NULL,
-	[status] VARCHAR(20) NOT NULL,
+	[status] NVARCHAR(20) NOT NULL,
 	responsible_employee_id INT NOT NULL REFERENCES Employees(id)
 );
 
@@ -19,9 +19,9 @@ CREATE TABLE ProductionConsumptions(
 
 CREATE TABLE Machines(
 	id INT IDENTITY(1, 1) PRIMARY KEY,
-	[name] VARCHAR(100) NOT NULL,
-	code VARCHAR(50) NOT NULL,
-	[description] VARCHAR(MAX),
+	[name] NVARCHAR(100) NOT NULL,
+	code NVARCHAR(50) NOT NULL,
+	[description] NVARCHAR(MAX),
 	active BIT NOT NULL
 );
 
