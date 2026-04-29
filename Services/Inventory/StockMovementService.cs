@@ -58,7 +58,12 @@ public class StockMovementService
                     SET 
                         quantity_on_hand = quantity_on_hand - @QuantityOnHand,
                         last_updated = GETDATE()
-                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+                    WHERE id = (
+                        SELECT TOP (1) id 
+                        FROM InventoryItems 
+                        WHERE product_id = @ProductId AND warehouse_id = @WarehouseId
+                        ORDER BY batch_number
+                    );";
 
                 await connection.ExecuteAsync(updateFromInventoryItem, new
                 {
@@ -80,7 +85,7 @@ public class StockMovementService
                 }, transaction);
 
                 const string upsertInventoryItem = @"
-                    IF EXISTS (SELECT 1 FROM InventoryItems WHERE product_id = @ProductId AND warehouse_id = @WarehouseId)
+                    IF EXISTS (SELECT 1 FROM InventoryItems WHERE product_id = @ProductId AND warehouse_id = @WarehouseId AND batch_number = @BatchNumber)
                     BEGIN
                         UPDATE InventoryItems 
                         SET 
@@ -249,7 +254,7 @@ public class StockMovementService
                     await connection.ExecuteAsync(@"
                         UPDATE InventoryItems 
                         SET quantity_on_hand = quantity_on_hand + @Qty, last_updated = GETDATE()
-                        WHERE product_id = @Pid AND warehouse_id = @Wid", 
+                        WHERE id = (SELECT TOP 1 id FROM InventoryItems WHERE product_id = @Pid AND warehouse_id = @Wid ORDER BY batch_number)", 
                         new { Qty = oldMove.quantity, Pid = oldMove.product_id, Wid = oldMove.from_warehouse_id }, transaction);
                 }
 
@@ -258,7 +263,7 @@ public class StockMovementService
                     await connection.ExecuteAsync(@"
                         UPDATE InventoryItems 
                         SET quantity_on_hand = quantity_on_hand - @Qty, last_updated = GETDATE()
-                        WHERE product_id = @Pid AND warehouse_id = @Wid", 
+                        WHERE id = (SELECT TOP 1 id FROM InventoryItems WHERE product_id = @Pid AND warehouse_id = @Wid ORDER BY batch_number)", 
                         new { Qty = oldMove.quantity, Pid = oldMove.product_id, Wid = oldMove.to_warehouse_id }, transaction);
                 }
             }
@@ -288,7 +293,7 @@ public class StockMovementService
                     SET 
                         quantity_on_hand = quantity_on_hand - @QuantityOnHand,
                         last_updated = GETDATE()
-                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+                    WHERE id = (SELECT TOP 1 id FROM InventoryItems WHERE product_id = @ProductId AND warehouse_id = @WarehouseId ORDER BY batch_number)";
 
                 await connection.ExecuteAsync(updateFromInventoryItem, new
                 {
@@ -302,7 +307,7 @@ public class StockMovementService
                     SET 
                         quantity_on_hand = quantity_on_hand + @QuantityOnHand,
                         last_updated = GETDATE()
-                    WHERE product_id = @ProductId AND warehouse_id = @WarehouseId";
+                    WHERE id = (SELECT TOP 1 id FROM InventoryItems WHERE product_id = @ProductId AND warehouse_id = @WarehouseId ORDER BY batch_number)";
 
                 await connection.ExecuteAsync(updateToInventoryItem, new
                 {
@@ -355,7 +360,7 @@ public class StockMovementService
                     await connection.ExecuteAsync(@"
                         UPDATE InventoryItems 
                         SET quantity_on_hand = quantity_on_hand + @Qty, last_updated = GETDATE()
-                        WHERE product_id = @Pid AND warehouse_id = @Wid", 
+                        WHERE id = (SELECT TOP 1 id FROM InventoryItems WHERE product_id = @Pid AND warehouse_id = @Wid ORDER BY batch_number)", 
                         new { Qty = oldMove.quantity, Pid = oldMove.product_id, Wid = oldMove.from_warehouse_id }, transaction);
                 }
 
@@ -364,7 +369,7 @@ public class StockMovementService
                     await connection.ExecuteAsync(@"
                         UPDATE InventoryItems 
                         SET quantity_on_hand = quantity_on_hand - @Qty, last_updated = GETDATE()
-                        WHERE product_id = @Pid AND warehouse_id = @Wid", 
+                        WHERE id = (SELECT TOP 1 id FROM InventoryItems WHERE product_id = @Pid AND warehouse_id = @Wid ORDER BY batch_number)", 
                         new { Qty = oldMove.quantity, Pid = oldMove.product_id, Wid = oldMove.to_warehouse_id }, transaction);
                 }
             }

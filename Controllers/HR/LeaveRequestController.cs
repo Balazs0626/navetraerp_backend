@@ -58,6 +58,7 @@ public class LeaveRequestController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize]
     [HttpPut("reject")]
     public async Task<IActionResult> Reject([FromBody] LeaveRequestDto dto)
     {
@@ -65,6 +66,20 @@ public class LeaveRequestController : ControllerBase
         if (!User.HasClaim("permission", "EDIT:LEAVE_REQUESTS")) return Forbid();
 
         var result = await _service.RejectAsync(dto);
+
+        if (!result) return NotFound();
+
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+
+        if (!User.HasClaim("permission", "DELETE:LEAVE_REQUESTS")) return Forbid();
+
+        var result = await _service.DeleteAsync(id);
 
         if (!result) return NotFound();
 

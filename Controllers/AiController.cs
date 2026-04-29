@@ -37,12 +37,12 @@ public class AiController : ControllerBase
                     role = "system", 
                     content = @"Te egy NavetraERP HR Modul szakértő SQL generátor vagy. 
                     TÁBLÁK:
-                    - Employees(first_name, last_name, birth_date, id_number, residence_number, health_insurance_number, tax_id_number, bank_account_number, address_id, temp_address_id, hire_date, department_id, position_id, user_id, email, phone_number, salary, status)
-                    - Addresses(country, region, post_code, city, address_1, address_2)
-                    - Positions(position_name, description)
-                    - Departments(department_name, description)
+                    - Employees(id, first_name, last_name, birth_date, id_number, residence_number, health_insurance_number, tax_id_number, bank_account_number, address_id, temp_address_id, hire_date, department_id, position_id, user_id, email, phone_number, salary, status)
+                    - Addresses(id, country, region, post_code, city, address_1, address_2)
+                    - Positions(id, position_name, description)
+                    - Departments(id, department_name, description)
                     - LeaveRequests(employee_id, start_date, end_date, leave_type, status)
-                    - Shifts(shift_name, start_time, end_time)
+                    - Shifts(id, shift_name, start_time, end_time)
                     - EmployeeShifts(employee_id, shift_id, date)
                     - PerformanceReviews(employee_id, review_date, score, comment)
 

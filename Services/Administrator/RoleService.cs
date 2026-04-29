@@ -231,16 +231,42 @@ public class RoleService
     {
         using var connection = new SqlConnection(_config.GetConnectionString("Default"));
 
-        const string delete = @"
-            DELETE FROM Roles
-            WHERE id = @id";
+        await connection.OpenAsync();
 
-        var rowsAffected = await connection.ExecuteAsync(delete, new
+        using var transaction = connection.BeginTransaction();
+
+        var rowsAffected = 0;
+
+        try
         {
-            id
-        });
 
-        return rowsAffected > 0;
+            const string deleteRolePermissions = @"
+                DELETE FROM RolePermissions
+                WHERE role_id = @id";
+
+            rowsAffected = await connection.ExecuteAsync(deleteRolePermissions, new
+            {
+                id
+            }, transaction);
+
+            const string deleteRole = @"
+                DELETE FROM Roles
+                WHERE id = @id";
+
+            rowsAffected += await connection.ExecuteAsync(deleteRole, new
+            {
+                id
+            }, transaction);
+
+            transaction.Commit();
+
+            return rowsAffected > 0;
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 
     #endregion
